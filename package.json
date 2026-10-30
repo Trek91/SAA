@@ -1,0 +1,88 @@
+{
+  "name": "saa-assistant",
+  "version": "0.1.6",
+  "private": true,
+  "description": "A transparent, custom-API AI chatbot overlay",
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
+    "build": "node scripts/build-native.cjs && tsc -b && vite build",
+    "start": "npm run build && electron .",
+    "desktop": "electron .",
+    "test": "node --test desktop/provider.test.cjs desktop/settings.test.cjs desktop/storage.test.cjs desktop/history.test.cjs desktop/clipboard.test.cjs",
+    "package": "npm run build && electron-builder --win nsis portable",
+    "package:mac": "npm run build && electron-builder --mac dmg zip --publish never",
+    "check:ui": "node scripts/verify-ui.cjs",
+    "check:desktop": "node scripts/verify-desktop.cjs",
+    "check:passive": "node scripts/verify-passive-input.cjs",
+    "check:capture": "node scripts/verify-capture-exclusion.cjs",
+    "check:providers": "node scripts/verify-providers.cjs",
+    "check:persistence": "node scripts/verify-persistence.cjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0",
+    "playwright": "^1.64.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.0"
+  },
+  "build": {
+    "appId": "local.saa.assistant",
+    "productName": "SAA",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/*.cjs",
+      "!desktop/*.test.cjs",
+      "package.json",
+      "desktop/native/SaaInput.exe",
+      "build/icon.ico",
+      "build/icon.png",
+      "build/icon-mac.png"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": true,
+      "signExecutable": false
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon-mac.png",
+      "artifactName": "SAA-${version}-mac-${arch}.${ext}",
+      "identity": "-"
+    },
+    "portable": {
+      "artifactName": "SAA-${version}-portable.exe"
+    },
+    "nsis": {
+      "artifactName": "SAA-${version}-Setup.exe",
+      "oneClick": true,
+      "perMachine": false,
+      "createStartMenuShortcut": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "SAA",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
+    },
+    "asarUnpack": [
+      "desktop/native/*.exe"
+    ]
+  }
+}

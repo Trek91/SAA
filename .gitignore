@@ -1,0 +1,15 @@
+node_modules/
+dist/
+release/
+*.log
+tsconfig.tsbuildinfo
+.build-intermediates/
+desktop/native/*.exe
+.env
+.env.*
+!.env.example
+settings.enc
+conversations.json
+Local State
+*.recovery*
+.DS_Store
