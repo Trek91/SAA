@@ -16,14 +16,14 @@ const fs=require('fs');
 const [bundle,driver]=process.argv.slice(2);
 const clients=[['local.saa.assistant',0],['com.github.Electron',0],[bundle+'/Contents/MacOS/SAA',1],[bundle+'/Contents/Resources/app.asar.unpacked/desktop/native/SaaInputMac',1],[driver,1],[process.execPath,1]];
 const quote=s=>"'"+s.replaceAll("'","''")+"'";
-let sql='';
+let sql='BEGIN IMMEDIATE;\n';
 for(const [client,type]of clients)for(const service of ['kTCCServiceAccessibility','kTCCServiceListenEvent','kTCCServicePostEvent','kTCCServiceScreenCapture']){
 sql+=`INSERT OR REPLACE INTO access (service,client,client_type,auth_value,auth_reason,auth_version,indirect_object_identifier,flags,last_modified) VALUES (${quote(service)},${quote(client)},${type},2,4,1,'UNUSED',0,strftime('%s','now'));\n`;
 }
-fs.writeFileSync(process.env.RUNNER_TEMP+'/saa-tcc-fixture.sql',sql);
+fs.writeFileSync(process.env.RUNNER_TEMP+'/saa-tcc-fixture.sql',sql+'COMMIT;\n');
 NODE
 for database in "/Library/Application Support/com.apple.TCC/TCC.db" "$HOME/Library/Application Support/com.apple.TCC/TCC.db"; do
-  if sudo test -f "$database"; then sudo sqlite3 "$database" < "$RUNNER_TEMP/saa-tcc-fixture.sql"; fi
+  if sudo test -f "$database"; then sudo sqlite3 -cmd '.timeout 15000' "$database" < "$RUNNER_TEMP/saa-tcc-fixture.sql"; fi
 done
 sudo killall tccd || true
 sleep 2
