@@ -1,8 +1,19 @@
 # Run SAA on your Mac
 
-This repository contains the source, not your Windows installation or personal data. The Mac target is an initial port and has not been built or tested on a Mac yet.
+This repository contains the source, not your Windows installation or personal data. Both Apple Silicon and Intel packages have been built on GitHub Mac runners, verified with `codesign`, and tested for packaged chat persistence and restart. Browser fullscreen/passive input and capture behavior still need testing on your Mac.
 
-## Download and run
+## Download the app directly
+
+Open [Mac downloads](https://github.com/Trek91/SAA/releases/tag/mac-v0.1.6) while signed into an account with access to this private repository.
+
+- Apple Silicon (M-series): choose `SAA-0.1.6-mac-arm64.zip` or `.dmg`.
+- Intel: choose `SAA-0.1.6-mac-x64.zip` or `.dmg`.
+
+Extract the ZIP to get `SAA.app`, move it to Applications, then double-click it. Alternatively, open the DMG and drag SAA to Applications. Node.js and Git are not required for these downloads. If macOS blocks the first launch, use System Settings > Privacy & Security > Open Anyway for the downloaded SAA application. These builds are ad-hoc signed, not Apple-notarized.
+
+Enter your API settings again on the Mac. Windows credentials and chat history are not included in the download.
+
+## Run from source instead
 
 1. Install Node.js 22 LTS (including npm) and Git on your Mac. If Git requests Apple's Command Line Tools, install them.
 2. Sign in to GitHub as Trek91 or an account invited to this private repository. Clone with GitHub Desktop, or run:

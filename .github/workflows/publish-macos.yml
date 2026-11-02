@@ -1,0 +1,52 @@
+name: Publish verified Mac downloads
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Build macOS application run ID
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BUILD_RUN: ${{ inputs.run_id }}
+    steps:
+      - name: Check build completed successfully
+        run: |
+          gh api "repos/$GH_REPO/actions/runs/$BUILD_RUN" > run.json
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('run.json'));if(r.conclusion!=='success'||r.name!=='Build macOS application'||r.event!=='workflow_dispatch')throw Error('Expected a successful manually requested Mac build');fs.appendFileSync(process.env.GITHUB_ENV,'BUILD_SHA='+r.head_sha+'\n')"
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+          pattern: SAA-mac-*
+          merge-multiple: true
+          path: downloads
+      - name: Verify artifact checksums and publish
+        run: |
+          cd downloads
+          sha256sum -c SHA256SUMS-arm64.txt
+          sha256sum -c SHA256SUMS-x64.txt
+          cat > notes.md <<'EOF'
+          Ready-to-run Mac applications: no Node.js or source build required.
+
+          - Apple Silicon (M-series): download SAA-0.1.6-mac-arm64.zip or .dmg.
+          - Intel Mac: download SAA-0.1.6-mac-x64.zip or .dmg.
+
+          Extract the ZIP to get SAA.app, move it to Applications, then open it. Alternatively, open the DMG and drag SAA to Applications.
+
+          Both packages were built on matching GitHub Mac runners, passed all 32 shared tests, codesign verification, and the packaged chat persistence/restart test. Enter your API settings again on the Mac; credentials and conversations are not bundled.
+
+          These builds are ad-hoc signed, not Apple-notarized. If blocked on first launch, approve SAA in System Settings > Privacy & Security > Open Anyway. Windows passive typing over fullscreen has no Mac implementation; Mac opens in interactive mode. macOS ScreenCaptureKit recorders may capture the window despite exclusion being enabled. Browser/fullscreen and capture behavior need testing on your Mac.
+          EOF
+          gh release create mac-v0.1.6 SAA-0.1.6-mac-*.zip SAA-0.1.6-mac-*.dmg SHA256SUMS-*.txt --target "$BUILD_SHA" --title "SAA 0.1.6 for macOS (Apple Silicon and Intel)" --notes-file notes.md --prerelease --latest=false
