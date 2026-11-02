@@ -3,6 +3,7 @@ import {ArrowLeft,ChevronDown,Save} from 'lucide-react';
 import {providerDefaults,providerNames,type ProviderConfig,type ProviderId,type Settings} from '../domain/types';
 import {IconButton} from './IconButton';
 import {ProviderPicker} from './ProviderPicker';
+import {bridge} from '../infrastructure/bridge';
 export function SettingsPanel({value,onSave,onSaveProvider,onValidate,onPrivacyChange,onClose}:{value:Settings;onSave:(s:Settings)=>Promise<void>;onSaveProvider:(id:ProviderId,patch:Partial<ProviderConfig>)=>Promise<void>;onValidate:(id:ProviderId,config:ProviderConfig)=>Promise<{models:string[];message:string}>;onPrivacyChange:(enabled:boolean)=>Promise<void>;onClose:()=>void}){
  const[profiles,setProfiles]=useState(value.providers);const[selected,setSelected]=useState(value.activeProvider);
  const[error,setError]=useState('');const[saving,setSaving]=useState(false);const[privacySaving,setPrivacySaving]=useState(false);const[checking,setChecking]=useState(false);
@@ -18,7 +19,8 @@ export function SettingsPanel({value,onSave,onSaveProvider,onValidate,onPrivacyC
  return <section className="settings-panel">
   <div className="section-heading"><IconButton className="icon-button" label="Back to chat" onClick={onClose}><ArrowLeft size={20}/></IconButton><div><h1>Make it your own.</h1><p>Connect your API. Keep your workflow.</p></div></div>
   <div className="setting-line"><div><strong>Exclude SAA from screen capture</strong><small>Visible to you. Hidden from supported screenshots and screen sharing.</small></div><button aria-label="Exclude SAA from screen capture" aria-pressed={value.captureExclusion} type="button" disabled={locked} className={`switch ${value.captureExclusion?'on':''}`} onClick={()=>void changePrivacy()}><span/></button></div>
-  <p className="privacy-note">Capture-app support varies. Test once with your screen-sharing or recording app.</p>
+  <p className="privacy-note">{navigator.userAgent.includes('Macintosh')?'macOS ScreenCaptureKit recorders can capture SAA despite this setting. SAA briefly hides its panel for its own screen attachments.':'Capture-app support varies. Test once with your screen-sharing or recording app.'}</p>
+  {navigator.userAgent.includes('Macintosh')&&<div className="setting-line"><div><strong>Mac permissions</strong><small>Enable Accessibility for passive typing and Screen Recording for screen attachments. Restart SAA if macOS requests it.</small></div><div><button type="button" className="secondary-button" onClick={()=>void bridge.permissions('accessibility').catch(e=>setError(String(e)))}>Accessibility settings</button><button type="button" className="secondary-button" onClick={()=>void bridge.permissions('screen').catch(e=>setError(String(e)))}>Screen Recording settings</button></div></div>}
   <form onSubmit={submit} className="provider-form">
    <div className="provider-intro"><h2>AI providers</h2><p>Each provider has its own settings. Keys use your operating system’s encryption and stay in the desktop layer.</p></div>
    <div className="provider-row"><div><strong>Active provider</strong><small>Save to use for new messages. Switch saved providers from the chat header too.</small></div><ProviderPicker value={selected} disabled={locked} onChange={id=>{setSelected(id);setValidation(null);setError('');}}/></div>

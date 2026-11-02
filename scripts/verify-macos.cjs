@@ -16,6 +16,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   browser=await _electron.launch({args:[fixture,`--user-data-dir=${path.join(profile,'browser')}`],env});const browserPage=await browser.firstWindow();
   app=await _electron.launch({executablePath:process.env.SAA_TEST_EXECUTABLE,args:process.env.SAA_TEST_EXECUTABLE?[`--user-data-dir=${profile}`]:[path.join(__dirname,'..'),`--user-data-dir=${profile}`],env});
   const page=await app.firstWindow();await page.getByRole('textbox',{name:'Message',exact:true}).waitFor();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.evaluate(()=>{window.saaMacPackets=[];window.saa.onPassiveInput(e=>{window.saaMacPackets.push({type:e.type,kind:e.kind,x:e.x,y:e.y});if(window.saaMacPackets.length>12)window.saaMacPackets.shift();});});
   const permissions=await page.evaluate(()=>window.saa.permissions('status'));console.log('Mac permission status:',permissions);
   assert.equal(permissions.platform,'darwin');
   await page.getByRole('button',{name:'Settings',exact:true}).click();
@@ -35,13 +36,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   await page.getByRole('button',{name:'Compact panel',exact:true}).click();await page.getByRole('button',{name:'Expand panel',exact:true}).click();
   await page.evaluate(()=>window.saa.savePrivacy({captureExclusion:false}));assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isContentProtected()),false);await page.evaluate(()=>window.saa.savePrivacy({captureExclusion:true}));
   await page.evaluate(()=>window.saa.windowAction('hide'));const browserPID=await browser.evaluate(()=>process.pid);input('focus',browserPID);await browserPage.getByRole('button',{name:'Enter fullscreen',exact:true}).click();await browserPage.waitForFunction(()=>!!document.fullscreenElement&&document.hasFocus());
-  await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.setFocusable(false);w.showInactive();});await expect.poll(()=>browserPage.evaluate(()=>!!document.fullscreenElement&&document.hasFocus())).toBe(true);
+  // Reopening must use the actual application path, which re-enables the router.
+  await app.evaluate(({app})=>app.emit('second-instance'));await expect.poll(()=>browserPage.evaluate(()=>!!document.fullscreenElement&&document.hasFocus())).toBe(true);
   // Fail rather than treating a permissions-limited run as a successful input test.
   await expect.poll(()=>page.evaluate(async()=>(await window.saa.permissions('status')).passiveReady),{timeout:15000}).toBe(true);
   assert.equal(input('status'),'trusted');
   async function click(locator){await locator.scrollIntoViewIfNeeded();const b=await locator.boundingBox();assert.ok(b);const p=await app.evaluate(({BrowserWindow},box)=>{const r=BrowserWindow.getAllWindows()[0].getContentBounds();return{x:r.x+box.x+box.width/2,y:r.y+box.y+box.height/2};},b);input('click',browserPID,p.x,p.y);}
   await page.evaluate(()=>{document.querySelector('textarea[aria-label="Message"]').value='';});
-  await click(page.getByRole('textbox',{name:'Message',exact:true}));await expect.poll(()=>page.locator('.passive-editing').count()).toBe(1);
+  await click(page.getByRole('textbox',{name:'Message',exact:true}));try{await expect.poll(()=>page.locator('.passive-editing').count()).toBe(1);}catch(e){console.log('Native click diagnosis',await page.evaluate(()=>({packets:window.saaMacPackets,footer:document.querySelector('.status-footer')?.textContent})),await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];return{bounds:w.getBounds(),content:w.getContentBounds(),visible:w.isVisible(),focused:w.isFocused(),source:w.getMediaSourceId()};}));throw e;}
   input('key',browserPID,0,1048576); // Command+A
   input('text',browserPID,'Native Mac passive typing');await expect(page.getByRole('textbox',{name:'Message',exact:true})).toHaveValue('Native Mac passive typing');
   assert.equal(input('foreground'),String(browserPID));assert.equal(await browserPage.evaluate(()=>!!document.fullscreenElement&&document.hasFocus()),true);

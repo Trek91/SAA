@@ -140,6 +140,7 @@ int main(int argc,const char **argv){@autoreleasepool{
     [NSRunLoop.mainRunLoop addTimer:motion forMode:NSRunLoopCommonModes];
     NSTimer *watchdog=[NSTimer timerWithTimeInterval:1 repeats:YES block:^(NSTimer *t){
         if(kill(parentPID,0)!=0||getppid()!=parentPID){exiting=YES;CFRunLoopStop(CFRunLoopGetMain());}
+        if(tap&&!AXIsProcessTrusted()){Release();CGEventTapEnable(tap,false);CFRunLoopRemoveSource(CFRunLoopGetMain(),tapSource,kCFRunLoopCommonModes);CFRelease(tapSource);CFRelease(tap);tap=NULL;tapSource=NULL;Emit(@{@"type":@"permission",@"ready":@NO});}
         if(typing&&(Foreground()!=foregroundPID||NSProcessInfo.processInfo.systemUptime-lastInput>120||IsSecureEventInputEnabled()))Release();
         InstallTap();
     }];[NSRunLoop.mainRunLoop addTimer:watchdog forMode:NSRunLoopCommonModes];
