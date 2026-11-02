@@ -55,23 +55,23 @@ static CGEventRef Event(CGEventTapProxy proxy, CGEventType type, CGEventRef even
         if(type!=kCGEventKeyDown)return event;
         int code=(int)CGEventGetIntegerValueField(event,kCGKeyboardEventKeycode);
         CGEventFlags flags=CGEventGetFlags(event);
-        BOOL command=(flags&kCGEventFlagMaskCommand)!=0,control=(flags&kCGEventFlagMaskControl)!=0,shift=(flags&kCGEventFlagMaskShift)!=0;
+        BOOL command=(flags&kCGEventFlagMaskCommand)!=0,control=(flags&kCGEventFlagMaskControl)!=0,shift=(flags&kCGEventFlagMaskShift)!=0,option=(flags&kCGEventFlagMaskAlternate)!=0;
         if(code==53){Release();if(code<256)consumed[code]=YES;return NULL;}
         if(control){Release();return event;}
         NSString *key=nil,*text=@"";
         switch(code){case 51:key=@"Backspace";break;case 117:key=@"Delete";break;case 48:key=@"Tab";break;case 36:case 76:key=@"Enter";break;case 123:key=@"ArrowLeft";break;case 124:key=@"ArrowRight";break;case 125:key=@"ArrowDown";break;case 126:key=@"ArrowUp";break;case 115:key=@"Home";break;case 119:key=@"End";break;}
         if(command){
             // Physical command keys remain valid across keyboard layouts.
-            switch(code){case 0:key=@"a";break;case 8:key=@"c";break;case 7:key=@"x";break;case 9:key=@"v";break;case 6:key=shift?@"y":@"z";break;case 123:key=@"Home";break;case 124:key=@"End";break;default:Release();return event;}
+            switch(code){case 0:key=@"a";break;case 8:key=@"c";break;case 7:key=@"x";break;case 9:key=@"v";break;case 6:key=shift?@"y":@"z";break;case 123:key=@"Home";break;case 124:key=@"End";break;case 51:key=@"Backspace";break;default:Release();return event;}
         }
         if(!key){
-            NSEvent *native=[NSEvent eventWithCGEvent:event];
-            text=native.characters?:@"";
+            UniChar chars[32];UniCharCount count=0;CGEventKeyboardGetUnicodeString(event,32,&count,chars);
+            text=count?[NSString stringWithCharacters:chars length:MIN(count,32)]:[NSEvent eventWithCGEvent:event].characters?:@"";
             if(!text.length)return event;
         }
         if(code>=0&&code<256)consumed[code]=YES;
         lastInput=NSProcessInfo.processInfo.systemUptime;
-        Emit(@{@"type":@"key",@"key":key?:@"",@"text":text,@"ctrl":@(command),@"shift":@(shift)});
+        Emit(@{@"type":@"key",@"key":key?:@"",@"text":text,@"ctrl":@(command||(option&&(code==51||code==123||code==124))),@"shift":@(shift),@"lineDelete":@(command&&code==51)});
         return NULL;
     }
     CGPoint p=CGEventGetLocation(event);CGRect bounds=CGRectZero;

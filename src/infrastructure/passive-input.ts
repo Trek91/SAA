@@ -49,7 +49,7 @@ export function installPassiveInput(){
    return;
   }
   if(e.key==='Tab'){const fields=[...document.querySelectorAll('input,textarea')].filter(editable);const i=fields.indexOf(el);const next=fields[(i+(e.shift?-1:1)+fields.length)%fields.length];if(next)choose(next);return;}
-  if(e.key==='Backspace'){if(start===end&&start>0)start=e.ctrl?el.value.slice(0,start).search(/\S+\s*$/u):start-(el.value.codePointAt(start-2)!>0xffff?2:1);replace(el,'',Math.max(0,start),end);return;}
+  if(e.key==='Backspace'){if(start===end&&start>0)start=e.lineDelete?el.value.lastIndexOf('\n',start-1)+1:e.ctrl?el.value.slice(0,start).search(/\S+\s*$/u):start-(el.value.codePointAt(start-2)!>0xffff?2:1);replace(el,'',Math.max(0,start),end);return;}
   if(e.key==='Delete'){if(start===end)end=Math.min(el.value.length,end+1);replace(el,'',start,end);return;}
   if(e.key?.startsWith('Arrow')||e.key==='Home'||e.key==='End'){
    let next=e.key==='Home'?0:e.key==='End'?el.value.length:e.key==='ArrowLeft'||e.key==='ArrowUp'?Math.max(0,start-1):Math.min(el.value.length,end+1);

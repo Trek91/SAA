@@ -17,7 +17,7 @@ function createPassiveInput(win, emit) {
   lines.on('line',line=>{try{const value=JSON.parse(line);if(value.type==='ready'){ready=true;geometry();command({action:'state',enabled});}else if(value.type==='drag'&&mac&&enabled&&Number.isFinite(value.x)&&Number.isFinite(value.y)){win.setPosition(Math.round(value.x),Math.round(value.y),false);}else if(['pointer','key','typing','permission'].includes(value.type))emit(value);}catch{}});
   child.stdin.on('error',()=>{});
   child.on('error',()=>emit({type:'error',text:'Passive input could not start. Use interactive mode to type.'}));
-  child.on('exit',()=>{closed=true;lines.close();emit({type:'typing',active:false});if(enabled)emit({type:'error',text:'Passive input stopped. Restart SAA, or switch to interactive mode.'});});
+  child.on('exit',()=>{closed=true;lines.close();emit({type:'typing',active:false});if(mac)emit({type:'permission',ready:false});if(enabled)emit({type:'error',text:'Passive input stopped. Restart SAA, or switch to interactive mode.'});});
   return {
     state(value){enabled=!!value;geometry();if(ready)command({action:'state',enabled});},
     typing(active){if(ready)command({action:'typing',active:enabled&&!!active});},

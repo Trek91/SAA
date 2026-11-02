@@ -12,7 +12,7 @@ export type Mode = 'passive' | 'interactive';
 export interface DesktopPermissions {platform:string;passiveReady:boolean;accessibility:boolean;screen:string}
 export interface ChatEvent { id: string; type: 'delta' | 'done' | 'error'; text?: string }
 export interface ActionEvent { type: 'clipboard' | 'capture' | 'mode' | 'clickThrough' | 'settings' | 'compact' | 'error' | 'typing' | 'permissions'; text?: string; image?: string; mode?: Mode; clickThrough?: boolean; compact?: boolean; settings?: Settings; active?:boolean;permissions?:DesktopPermissions }
-export interface PassiveEvent {type:'pointer'|'key';kind?:'down'|'up'|'move'|'wheel'|'leave';seq?:number;x?:number;y?:number;width?:number;height?:number;delta?:number;key?:string;text?:string;ctrl?:boolean;shift?:boolean}
+export interface PassiveEvent {type:'pointer'|'key';kind?:'down'|'up'|'move'|'wheel'|'leave';seq?:number;x?:number;y?:number;width?:number;height?:number;delta?:number;key?:string;text?:string;ctrl?:boolean;shift?:boolean;lineDelete?:boolean}
 const connectionDefaults:ProviderConfig = {
   endpoint: 'https://api.openai.com/v1/chat/completions', model: '', apiKey: '', headers: '{}',
   systemPrompt: 'You are a helpful AI assistant. Give clear, accurate answers.', bodyTemplate: '',

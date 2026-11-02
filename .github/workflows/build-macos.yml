@@ -29,8 +29,10 @@ jobs:
         run: npm ci
       - name: Test shared provider and storage logic
         run: npm test
-      - name: Package application, ZIP and DMG
-        run: npm run package:mac -- --${{ matrix.arch }}
+      - name: Build and sign application bundle
+        run: |
+          npm run build
+          npx electron-builder --mac dir --${{ matrix.arch }} --publish never
       - name: Verify bundle and signature
         shell: bash
         run: |
@@ -48,6 +50,8 @@ jobs:
         run: bash scripts/prepare-macos-ci.sh
       - name: Verify native passive fullscreen input and desktop features
         run: node scripts/verify-macos.cjs
+      - name: Package the tested app as ZIP and DMG
+        run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --prepackaged "${SAA_TEST_EXECUTABLE%/Contents/MacOS/SAA}" --publish never
       - name: Calculate download checksums
         run: |
           cd release

@@ -15,10 +15,10 @@ int main(int argc,const char **argv){@autoreleasepool{
         if([action isEqual:@"click"]){for(int i=0;i<2;i++){CGEventRef e=CGEventCreateMouseEvent(source,i?kCGEventLeftMouseUp:kCGEventLeftMouseDown,p,kCGMouseButtonLeft);CGEventPost(kCGHIDEventTap,e);CFRelease(e);usleep(60000);}}
     }else if([action isEqual:@"text"]){
         if(argc!=4)return 2;NSString *text=@(argv[3]);
-        for(NSUInteger i=0;i<text.length;i++){UniChar ch=[text characterAtIndex:i];for(int down=1;down>=0;down--){CGEventRef e=CGEventCreateKeyboardEvent(source,0,down);CGEventKeyboardSetUnicodeString(e,1,&ch);CGEventPost(kCGHIDEventTap,e);CFRelease(e);usleep(12000);}}
+        for(NSUInteger i=0;i<text.length;i++){UniChar ch=[text characterAtIndex:i];for(int down=1;down>=0;down--){CGEventRef e=CGEventCreateKeyboardEvent(source,0,down);CGEventSetFlags(e,0);CGEventKeyboardSetUnicodeString(e,1,&ch);CGEventPost(kCGHIDEventTap,e);CFRelease(e);usleep(12000);}}
     }else if([action isEqual:@"key"]){
         if(argc<4)return 2;int code=atoi(argv[3]);CGEventFlags flags=argc>4?strtoull(argv[4],NULL,10):0;
-        for(int down=1;down>=0;down--){CGEventRef e=CGEventCreateKeyboardEvent(source,code,down);CGEventSetFlags(e,flags);CGEventPost(kCGHIDEventTap,e);CFRelease(e);usleep(30000);}
+        for(int down=1;down>=0;down--){CGEventRef e=CGEventCreateKeyboardEvent(source,code,down);CGEventSetFlags(e,down?flags:0);CGEventPost(kCGHIDEventTap,e);CFRelease(e);usleep(30000);}
     }else return 2;
     CFRelease(source);return 0;
 }}
