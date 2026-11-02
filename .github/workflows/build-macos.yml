@@ -1,0 +1,57 @@
+name: Build macOS application
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: macOS ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+          - arch: x64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Test shared provider and storage logic
+        run: npm test
+      - name: Package application, ZIP and DMG
+        run: npm run package:mac -- --${{ matrix.arch }}
+      - name: Verify bundle and signature
+        shell: bash
+        run: |
+          app_bundle="$(find release -maxdepth 3 -type d -name SAA.app -print -quit)"
+          test -n "$app_bundle"
+          test -x "$app_bundle/Contents/MacOS/SAA"
+          codesign --verify --deep --strict --verbose=2 "$app_bundle"
+          file "$app_bundle/Contents/MacOS/SAA"
+          printf 'SAA_TEST_EXECUTABLE=%s/Contents/MacOS/SAA\n' "$app_bundle" >> "$GITHUB_ENV"
+      - name: Verify packaged chat persistence and restart
+        run: npm run check:persistence
+      - name: Calculate download checksums
+        run: |
+          cd release
+          shasum -a 256 SAA-*-mac-*.zip SAA-*-mac-*.dmg > SHA256SUMS-${{ matrix.arch }}.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAA-mac-${{ matrix.arch }}
+          path: |
+            release/SAA-*-mac-*.zip
+            release/SAA-*-mac-*.dmg
+            release/SHA256SUMS-*.txt
+          if-no-files-found: error
+          retention-days: 14
