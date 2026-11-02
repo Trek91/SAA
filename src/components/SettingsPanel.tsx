@@ -20,7 +20,7 @@ export function SettingsPanel({value,onSave,onSaveProvider,onValidate,onPrivacyC
   <div className="setting-line"><div><strong>Exclude SAA from screen capture</strong><small>Visible to you. Hidden from supported screenshots and screen sharing.</small></div><button aria-label="Exclude SAA from screen capture" aria-pressed={value.captureExclusion} type="button" disabled={locked} className={`switch ${value.captureExclusion?'on':''}`} onClick={()=>void changePrivacy()}><span/></button></div>
   <p className="privacy-note">Capture-app support varies. Test once with your screen-sharing or recording app.</p>
   <form onSubmit={submit} className="provider-form">
-   <div className="provider-intro"><h2>AI providers</h2><p>Each provider has its own settings. Keys are encrypted with Windows protection and kept in the desktop layer.</p></div>
+   <div className="provider-intro"><h2>AI providers</h2><p>Each provider has its own settings. Keys use your operating system’s encryption and stay in the desktop layer.</p></div>
    <div className="provider-row"><div><strong>Active provider</strong><small>Save to use for new messages. Switch saved providers from the chat header too.</small></div><ProviderPicker value={selected} disabled={locked} onChange={id=>{setSelected(id);setValidation(null);setError('');}}/></div>
    <fieldset disabled={locked}>
     <div className="provider-row"><label htmlFor="api-endpoint"><strong>API endpoint</strong><small>Default: {providerDefaults[selected].endpoint}<br/>Accepts a base URL or a full chat endpoint.</small></label><input id="api-endpoint" aria-label="API endpoint" required type="url" value={draft.endpoint} onChange={e=>change('endpoint',e.target.value)}/></div>
@@ -41,7 +41,7 @@ export function SettingsPanel({value,onSave,onSaveProvider,onValidate,onPrivacyC
     </div></details>
    </fieldset>
    {error&&<p role="alert" className="error">{error}</p>}
-   <div className="privacy-note">Provider settings are encrypted on this Windows account. Chats are saved locally. The active provider receives messages and attached images you send.</div>
+   <div className="privacy-note">Provider settings are encrypted on this user account. Chats are saved locally. The active provider receives messages and attached images you send.</div>
    <div className="form-footer"><button type="button" className="secondary-button" disabled={locked} onClick={onClose}>Cancel</button><button className="primary-button" disabled={locked}><Save size={16}/>{saving?'Saving…':'Save settings'}</button></div>
   </form>
  </section>;

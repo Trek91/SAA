@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, globalShortcut, clipboard, desktopCapturer, screen, safeStorage, Tray, Menu, nativeImage, session } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, clipboard, desktopCapturer, screen, safeStorage, Tray, Menu, nativeImage, session, systemPreferences, shell } = require('electron');
 const fs = require('node:fs/promises');
 const {mkdirSync}=require('node:fs');
 const path = require('node:path');
@@ -25,6 +25,8 @@ const blockedFiles = new Set();
 let capturePending;
 let captureProtectionDepth=0;
 let passiveInput;
+let passiveReady=process.platform!=='darwin';
+function permissions(){return {platform:process.platform,passiveReady,accessibility:process.platform==='darwin'?systemPreferences.isTrustedAccessibilityClient(false):true,screen:process.platform==='darwin'?systemPreferences.getMediaAccessStatus('screen'):'granted'};}
 function updateInput(){passiveInput?.state(mode==='passive'&&!clickThrough&&win?.isVisible());}
 function hideWindow(){passiveInput?.state(false);win.hide();updateTray();}
 const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
@@ -134,8 +136,6 @@ function setMode(value) {
 
 function showPassive() {
   clickThrough=false;win.setIgnoreMouseEvents(false);send('saa:action',{type:'clickThrough',clickThrough:false});
-  // Only Windows has the native helper needed to type without activating SAA.
-  if(process.platform==='darwin'){setMode('interactive');return;}
   mode = 'passive'; win.setFocusable(false); win.showInactive();
   applyPrivacy();
   updateInput();
@@ -162,13 +162,17 @@ function captureScreen() {
     // Windows capture exclusion removes SAA from the image without hiding, showing,
     // activating, or changing focus in the fullscreen application behind it.
     const excluded = process.platform === 'win32' && win && !win.isDestroyed();
+    const hideMac=process.platform==='darwin'&&win?.isVisible();
+    if(process.platform==='darwin'&&systemPreferences.getMediaAccessStatus('screen')==='denied')throw new Error('Allow SAA in System Settings → Privacy & Security → Screen & System Audio Recording, then restart SAA.');
+    // ScreenCaptureKit ignores legacy protection; hide only during SAA's own capture.
+    if(hideMac){passiveInput?.state(false);win.hide();await new Promise(resolve=>setTimeout(resolve,150));}
     if(excluded){captureProtectionDepth++;applyPrivacy();}
     try {
       const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1920, height: 1080 }, fetchWindowIcons: false });
       const source = sources.find((item) => item.display_id === String(display.id)) || sources[0];
       if (!source || source.thumbnail.isEmpty()) throw new Error('Screen capture is unavailable on this display.');
       return source.thumbnail.toDataURL();
-    } finally { if(excluded){captureProtectionDepth--;applyPrivacy();} }
+    } finally { if(excluded){captureProtectionDepth--;applyPrivacy();}if(hideMac&&!win.isDestroyed()){win.showInactive();updateInput();} }
   })().finally(() => { capturePending = undefined; });
   return capturePending;
 }
@@ -199,7 +203,16 @@ const settingsTransaction = createSettingsTransaction({
 async function mutateSettings(derive) { await settingsTransaction(derive); return publicSettings(); }
 
 function setupIPC() {
-  handle('load', () => ({ settings: publicSettings(), conversations:historyStore.get(), mode, clickThrough, compact, shortcutsFailed, storageWarning }));
+  handle('load', () => ({ settings: publicSettings(), conversations:historyStore.get(), mode, clickThrough, compact, shortcutsFailed, storageWarning,permissions:permissions() }));
+  handle('permissions',async action=>{
+    if(!['status','accessibility','screen'].includes(action))throw new Error('Unknown permission action.');
+    if(process.platform==='darwin'){
+      if(action==='accessibility'){systemPreferences.isTrustedAccessibilityClient(true);await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility');}
+      if(action==='screen')await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture');
+      passiveInput?.retry?.();
+    }
+    return permissions();
+  });
   handle('saveSettings', async (input) => {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Invalid settings.');
     return mutateSettings((current) => updateSettings(current,input));
@@ -308,7 +321,8 @@ function createWindow() {
   applyPin();
   applyPrivacy();
   passiveInput=createPassiveInput(win,(event)=>{
-    if(event.type==='typing')send('saa:action',{type:'typing',active:event.active});
+    if(event.type==='permission'){passiveReady=!!event.ready;send('saa:action',{type:'permissions',permissions:permissions()});}
+    else if(event.type==='typing')send('saa:action',{type:'typing',active:event.active});
     else if(event.type==='error')send('saa:action',event);
     else if(mode==='passive'&&!clickThrough&&win.isVisible())send('saa:passiveInput',event);
   });
@@ -331,6 +345,7 @@ else {
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     await loadStorage(); setupIPC(); createWindow(); createTray();
+    if(process.platform==='darwin')Menu.setApplicationMenu(Menu.buildFromTemplate([{label:'SAA',submenu:[{role:'about'},{type:'separator'},{role:'quit'}]},{role:'editMenu'},{role:'windowMenu'}]));
     const shortcuts = [
       ['CommandOrControl+Shift+Space', toggleVisible], ['CommandOrControl+Alt+I', () => setMode(mode === 'passive' ? 'interactive' : 'passive')],
       ['CommandOrControl+Shift+Q', askClipboard], ['CommandOrControl+Shift+X', toggleClickThrough], ['CommandOrControl+Alt+S', captureAction],

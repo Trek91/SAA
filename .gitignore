@@ -5,6 +5,7 @@ release/
 tsconfig.tsbuildinfo
 .build-intermediates/
 desktop/native/*.exe
+desktop/native/SaaInputMac
 .env
 .env.*
 !.env.example

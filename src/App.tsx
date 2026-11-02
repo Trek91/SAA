@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { ArrowUp, Check, ChevronDown, ClipboardPaste, Grip, History, Layers, MessageCircle, Minus, Monitor, MousePointer2, Paperclip, Pin, Plus, Settings as SettingsIcon, SlidersHorizontal, Square, X } from 'lucide-react';
-import { defaults, providerNames, type ProviderId, type ProviderConfig, type Attachment, type Conversation, type Message, type Mode, type Settings } from './domain/types';
+import { defaults, providerNames, type DesktopPermissions, type ProviderId, type ProviderConfig, type Attachment, type Conversation, type Message, type Mode, type Settings } from './domain/types';
 import { bridge, isDesktop } from './infrastructure/bridge';
 import { IconButton } from './components/IconButton';
 import { ChatContent } from './components/ChatContent';
@@ -28,6 +28,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [compact, setCompact] = useState(false);
   const [typing,setTyping]=useState(false);
+  const [permissions,setPermissions]=useState<DesktopPermissions>();
   const request = useRef<{ id: string; conversationId: string } | null>(null);
   const lastAppearance = useRef<string | null>(null);
   const historyChanged = useRef(false);
@@ -44,6 +45,7 @@ export default function App() {
     setSettings({ ...defaults, ...data.settings }); setConversations(data.conversations);
     setCurrentId([...data.conversations].sort((a,b)=>b.updatedAt-a.updatedAt)[0]?.id??null);
     setMode(data.mode); setClickThrough(data.clickThrough); setCompact(!!data.compact); setLoaded(true);
+    setPermissions(data.permissions);
     if (data.storageWarning) setError(data.storageWarning);
     if (data.shortcutsFailed?.length) setError(`Some shortcuts could not register: ${data.shortcutsFailed.join(', ')}. Close apps using them and restart SAA.`);
   }).catch(err => { if (active) setError(`Could not load local data: ${String(err)}`); }); return () => { active = false; }; }, []);
@@ -97,6 +99,7 @@ export default function App() {
     if (event.type === 'compact') setCompact(!!event.compact);
     if (event.type === 'error') setError(event.text || 'The desktop action failed.');
     if (event.type === 'typing')setTyping(!!event.active);
+    if (event.type === 'permissions'&&event.permissions)setPermissions(event.permissions);
     if (event.type === 'mode' && event.mode) { setMode(event.mode); if (event.mode === 'interactive') textarea.current?.focus(); }
     if (event.type === 'clickThrough') setClickThrough(!!event.clickThrough);
     if (event.type === 'capture' && event.image) { addImage(event.image); setNotice('Screen captured. Review it before sending.'); }
@@ -132,6 +135,7 @@ export default function App() {
       <div className="brand"><MessageCircle className="brand-icon"/><span>SAA</span></div><span className="toolbar-divider"/><button className={`chat-tab ${view === 'chat' ? 'selected' : ''}`} onClick={() => setView('chat')}>Chat</button>
       <nav><button className={view === 'history' ? 'active' : ''} disabled={busy} onClick={() => setView(view === 'history' ? 'chat' : 'history')}><History size={21}/><span>History</span></button><button className={view === 'settings' ? 'active' : ''} disabled={busy} onClick={() => setView(view === 'settings' ? 'chat' : 'settings')}><SettingsIcon size={21}/><span>Settings</span></button><IconButton className={`icon-button pin ${settings.alwaysOnTop ? 'active' : ''}`} label={settings.alwaysOnTop ? 'Unpin overlay' : 'Keep on top'} onClick={() => setSettings(s => ({ ...s, alwaysOnTop: !s.alwaysOnTop }))}><Pin size={20}/></IconButton><IconButton className="icon-button compact-button" label={compact ? 'Expand panel' : 'Compact panel'} onClick={() => { setCompact(!compact); void action('compact'); }}><Grip size={21}/></IconButton><IconButton className="icon-button" label="Hide overlay · Ctrl+Shift+Space" onClick={() => isDesktop ? void action('hide') : setNotice('Show / hide works in the desktop app.')}><Minus size={21}/></IconButton></nav>
     </header>
+    {permissions?.platform==='darwin'&&!permissions.passiveReady&&<div className="mac-permission-notice" role="status"><span>Enable Accessibility for SAA in Mac System Settings to type over fullscreen apps. Return here after enabling it.</span><button className="secondary-button" onClick={()=>void bridge.permissions('accessibility').then(setPermissions).catch(e=>setError(String(e)))}>Enable fullscreen typing</button><button className="text-button" onClick={()=>void bridge.permissions('status').then(setPermissions)}>Check again</button><button className="text-button" onClick={()=>void action('mode')}>Toggle interactive mode</button></div>}
     {view === 'chat' ? <>
       <div className="model-bar"><span className={`status-dot ${settings.model ? 'connected' : ''}`}/><ProviderPicker value={settings.activeProvider} disabled={busy} onChange={id=>void selectProvider(id)}/><span className="toolbar-divider"/><button className="model-button model-name" disabled={busy} onClick={() => setView('settings')}>{settings.model || 'Your model'}<ChevronDown size={15}/></button><div className="message-toggle"><button className={latest ? 'selected' : ''} onClick={() => setLatest(true)}>Latest</button><button className={!latest ? 'selected' : ''} onClick={() => setLatest(false)}>All messages</button></div>{messages.length > 0 && <IconButton label="New chat" className="icon-button" onClick={newChat} disabled={busy}><Plus size={18}/></IconButton>}</div>
       <div className="chat-scroll" ref={scroll}><ChatContent messages={messages} latest={latest} busy={busy} onPrompt={setDraft} onRetry={retry}/></div>

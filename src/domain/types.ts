@@ -9,8 +9,9 @@ export interface Attachment { id: string; name: string; url: string }
 export interface Message { id: string; role: 'user' | 'assistant'; content: string; images?: Attachment[] }
 export interface Conversation { id: string; title: string; updatedAt: number; messages: Message[] }
 export type Mode = 'passive' | 'interactive';
+export interface DesktopPermissions {platform:string;passiveReady:boolean;accessibility:boolean;screen:string}
 export interface ChatEvent { id: string; type: 'delta' | 'done' | 'error'; text?: string }
-export interface ActionEvent { type: 'clipboard' | 'capture' | 'mode' | 'clickThrough' | 'settings' | 'compact' | 'error' | 'typing'; text?: string; image?: string; mode?: Mode; clickThrough?: boolean; compact?: boolean; settings?: Settings; active?:boolean }
+export interface ActionEvent { type: 'clipboard' | 'capture' | 'mode' | 'clickThrough' | 'settings' | 'compact' | 'error' | 'typing' | 'permissions'; text?: string; image?: string; mode?: Mode; clickThrough?: boolean; compact?: boolean; settings?: Settings; active?:boolean;permissions?:DesktopPermissions }
 export interface PassiveEvent {type:'pointer'|'key';kind?:'down'|'up'|'move'|'wheel'|'leave';seq?:number;x?:number;y?:number;width?:number;height?:number;delta?:number;key?:string;text?:string;ctrl?:boolean;shift?:boolean}
 const connectionDefaults:ProviderConfig = {
   endpoint: 'https://api.openai.com/v1/chat/completions', model: '', apiKey: '', headers: '{}',
@@ -27,7 +28,8 @@ export const providerDefaults:Record<ProviderId,ProviderConfig>={
 };
 export const defaults:Settings={...providerDefaults.openai,opacity:.86,alwaysOnTop:true,captureExclusion:true,activeProvider:'openai',providers:providerDefaults};
 export interface DesktopBridge {
-  load(): Promise<{ settings: Settings; conversations: Conversation[]; mode: Mode; clickThrough: boolean; shortcutsFailed?: string[]; compact?: boolean; storageWarning?: string }>;
+  load(): Promise<{ settings: Settings; conversations: Conversation[]; mode: Mode; clickThrough: boolean; shortcutsFailed?: string[]; compact?: boolean; storageWarning?: string;permissions?:DesktopPermissions }>;
+  permissions(action:'status'|'accessibility'|'screen'):Promise<DesktopPermissions>;
   saveSettings(value: Settings): Promise<Settings>;
   selectProvider(id:ProviderId):Promise<Settings>;
   saveProvider(id:ProviderId,patch:Partial<ProviderConfig>):Promise<Settings>;

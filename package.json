@@ -1,6 +1,6 @@
 {
   "name": "saa-assistant",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "description": "A transparent, custom-API AI chatbot overlay",
   "type": "module",
@@ -49,6 +49,7 @@
       "!desktop/*.test.cjs",
       "package.json",
       "desktop/native/SaaInput.exe",
+      "desktop/native/SaaInputMac",
       "build/icon.ico",
       "build/icon.png",
       "build/icon-mac.png"
@@ -82,7 +83,8 @@
       "runAfterFinish": true
     },
     "asarUnpack": [
-      "desktop/native/*.exe"
+      "desktop/native/*.exe",
+      "desktop/native/SaaInputMac"
     ]
   }
 }

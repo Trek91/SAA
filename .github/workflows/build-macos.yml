@@ -39,9 +39,15 @@ jobs:
           test -x "$app_bundle/Contents/MacOS/SAA"
           codesign --verify --deep --strict --verbose=2 "$app_bundle"
           file "$app_bundle/Contents/MacOS/SAA"
+          test -x "$app_bundle/Contents/Resources/app.asar.unpacked/desktop/native/SaaInputMac"
+          codesign --verify --strict "$app_bundle/Contents/Resources/app.asar.unpacked/desktop/native/SaaInputMac"
           printf 'SAA_TEST_EXECUTABLE=%s/Contents/MacOS/SAA\n' "$app_bundle" >> "$GITHUB_ENV"
       - name: Verify packaged chat persistence and restart
         run: npm run check:persistence
+      - name: Configure permissions in disposable Mac test machine
+        run: bash scripts/prepare-macos-ci.sh
+      - name: Verify native passive fullscreen input and desktop features
+        run: node scripts/verify-macos.cjs
       - name: Calculate download checksums
         run: |
           cd release

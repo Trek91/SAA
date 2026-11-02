@@ -3,6 +3,7 @@ export const isDesktop = !!window.saa;
 let previewSettings=defaults;
 // The browser preview is deliberately local-only. Credentials and HTTP belong to the desktop host.
 export const bridge: DesktopBridge = window.saa ?? {
+  async permissions(){return {platform:'preview',passiveReady:false,accessibility:false,screen:'unknown'};},
   async load() {
     let conversations = [];
     try { conversations = JSON.parse(localStorage.getItem('saa.preview.history') ?? '[]'); } catch { /* recover empty history */ }

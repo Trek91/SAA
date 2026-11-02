@@ -8,6 +8,7 @@ const subscribe = (channel, callback) => {
 };
 contextBridge.exposeInMainWorld('saa', Object.freeze({
   load: () => ipcRenderer.invoke('saa:load'),
+  permissions: (action) => ipcRenderer.invoke('saa:permissions',action),
   saveSettings: (settings) => ipcRenderer.invoke('saa:saveSettings', settings),
   selectProvider: (id) => ipcRenderer.invoke('saa:selectProvider',id),
   saveProvider: (id,patch) => ipcRenderer.invoke('saa:saveProvider',id,patch),
