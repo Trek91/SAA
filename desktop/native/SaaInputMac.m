@@ -12,6 +12,8 @@ static BOOL enabled, typing, held, dragging, insideBefore, exiting;
 static BOOL consumed[256];
 static CGPoint dragOrigin;
 static CGRect dragBounds;
+static CGRect panelBounds;
+static AXUIElementRef systemElement;
 static uint64_t sequence;
 static CFMachPortRef tap;
 static CFRunLoopSourceRef tapSource;
@@ -25,26 +27,17 @@ static void Emit(NSDictionary *value) {
 static void Release(void) {
     if (typing) { typing=NO; Emit(@{@"type":@"typing",@"active":@NO}); }
 }
-static NSArray *Windows(CGWindowListOption options) {
-    return CFBridgingRelease(CGWindowListCopyWindowInfo(options,windowID));
-}
 static BOOL Bounds(CGRect *rect) {
-    for (NSDictionary *info in Windows(kCGWindowListOptionIncludingWindow)) {
-        if ([info[(__bridge NSString *)kCGWindowOwnerPID] intValue] != parentPID) return NO;
-        return CGRectMakeWithDictionaryRepresentation((__bridge CFDictionaryRef)info[(__bridge NSString *)kCGWindowBounds],rect);
-    }
-    return NO;
+    *rect=panelBounds;return rect->size.width>0&&rect->size.height>0;
 }
 static BOOL Inside(CGPoint point, CGRect *bounds) {
     if (!Bounds(bounds) || !CGRectContainsPoint(*bounds,point)) return NO;
-    // Front-to-back hit testing excludes windows covering the SAA panel.
-    for (NSDictionary *info in Windows(kCGWindowListOptionOnScreenOnly|kCGWindowListExcludeDesktopElements)) {
-        CGRect rect;
-        if ([info[(__bridge NSString *)kCGWindowAlpha] doubleValue] <= 0) continue;
-        if (!CGRectMakeWithDictionaryRepresentation((__bridge CFDictionaryRef)info[(__bridge NSString *)kCGWindowBounds],&rect)) continue;
-        if (CGRectContainsPoint(rect,point)) return [info[(__bridge NSString *)kCGWindowNumber] unsignedIntValue]==windowID;
-    }
-    return NO;
+    // Protected windows can be absent from Quartz's capture-window list.
+    // Accessibility hit testing also respects windows covering our panel.
+    AXUIElementRef element=NULL;pid_t owner=0;
+    AXError result=AXUIElementCopyElementAtPosition(systemElement,point.x,point.y,&element);
+    if(result!=kAXErrorSuccess||!element)return NO;
+    AXUIElementGetPid(element,&owner);CFRelease(element);return owner==parentPID;
 }
 static pid_t Foreground(void) { return NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier; }
 static CGEventRef Event(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *context) {
@@ -114,6 +107,7 @@ static void InstallTap(void) {
 }
 static void Command(NSDictionary *cmd) {
     NSString *action=cmd[@"action"];
+    if([action isEqual:@"geometry"]){NSDictionary *b=cmd[@"bounds"];panelBounds=CGRectMake([b[@"x"] doubleValue],[b[@"y"] doubleValue],[b[@"width"] doubleValue],[b[@"height"] doubleValue]);}
     if([action isEqual:@"state"]){enabled=[cmd[@"enabled"] boolValue];if(!enabled){Release();held=NO;dragging=NO;insideBefore=NO;pendingMotion=nil;}}
     if([action isEqual:@"typing"]){if(enabled&&tap&&[cmd[@"active"] boolValue]){typing=YES;foregroundPID=Foreground();lastInput=NSProcessInfo.processInfo.systemUptime;Emit(@{@"type":@"typing",@"active":@YES});}else Release();}
     if([action isEqual:@"drag"]){CGEventRef e=CGEventCreate(NULL);dragOrigin=CGEventGetLocation(e);CFRelease(e);dragging=enabled&&held&&Bounds(&dragBounds);}
@@ -127,6 +121,7 @@ int main(int argc,const char **argv){@autoreleasepool{
     // A newly created Electron window may not be on the WindowServer list yet.
     // Every hit test checks the window's actual owning PID before routing input.
     setbuf(stdout,NULL);
+    systemElement=AXUIElementCreateSystemWide();AXUIElementSetMessagingTimeout(systemElement,0.05);
     [NSApplication sharedApplication];[NSApp setActivationPolicy:NSApplicationActivationPolicyProhibited];
     InstallTap();Emit(@{@"type":@"ready"});Emit(@{@"type":@"permission",@"ready":@(tap!=NULL)});
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED,0),^{

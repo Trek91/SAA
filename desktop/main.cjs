@@ -312,6 +312,7 @@ function createTray() {
 function createWindow() {
   const area = screen.getPrimaryDisplay().workArea;
   win = new BrowserWindow({
+    ...(process.platform==='darwin'?{type:'panel'}:{}),
     width: Math.min(1100, area.width - 40), height: Math.min(760, area.height - 40), minWidth: 600, minHeight: 480,
     frame: false, transparent: true, backgroundColor: '#00000000', show: false, focusable: false,
     icon:path.join(__dirname,'..','build',process.platform==='darwin'?'icon-mac.png':'icon.ico'),
