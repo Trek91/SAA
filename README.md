@@ -4,7 +4,7 @@ A floating AI chatbot inspired by Pluely, built in this folder. The reference fo
 
 ## GitHub and macOS
 
-Private source repository: https://github.com/Trek91/SAA. [Download the Mac app](https://github.com/Trek91/SAA/releases/tag/mac-v0.1.6), or see [Mac setup and packaging](docs/MACOS.md) for source builds. Apple Silicon and Intel bundles pass signature verification and packaged history/restart checks on GitHub Mac runners. Windows passive fullscreen typing is not implemented for macOS. Dependencies, generated executables, API credentials and conversation history are excluded from Git.
+Private source repository: https://github.com/Trek91/SAA. [Download the Mac app](https://github.com/Trek91/SAA/releases/tag/mac-v0.1.7), or see [Mac setup and packaging](docs/MACOS.md) for source builds and required permissions. Mac passive fullscreen typing now has a native implementation. Apple Silicon and Intel bundles pass signature verification, packaged history/restart checks, and real native mouse/key tests over a fullscreen Chromium fixture on GitHub Mac runners. Enable Accessibility in macOS before using passive typing. ScreenCaptureKit recorders may still capture protected windows; SAA hides its panel briefly for its own screen attachments. Dependencies, generated executables, API credentials and conversation history are excluded from Git.
 
 Install with `release/SAA-0.1.6-Setup.exe`. The installer adds **SAA** to your Start menu and desktop for your Windows account. Press the Windows key, type **SAA**, and open it; right-click the result and choose **Pin to Start** for a pinned Start icon. Installation does not require administrator access. **Launch SAA.cmd** prefers the installed Start menu shortcut, then the v0.1.6 portable executable if available.
 
