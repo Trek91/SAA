@@ -9,3 +9,5 @@ Goal: add searchable/organized chats, durable text drafts and window/layout pref
 5. Verify validation/recovery, off-screen bounds, exact draft restoration, archive/pin/rename persistence, undo, search, sidebar sizing and streaming scroll. Run existing provider, assistant, fullscreen, clipboard, history and capture tests; build/test personal Windows and Mac updates.
 
 No licensing, payments, accounts, cloud sync or new background networking. Drafts remain plaintext like current chat history. Abrupt kills may interrupt the latest 200 ms checkpoint; normal Quit flushes writes.
+
+Implemented as v0.2.1. Fresh review and 46 shared tests pass; packaged Windows usability/provider/assistant/privacy checks and both Mac architecture suites pass. See docs/QA.md for build evidence and the Windows physical-keyboard retest limitation in this desktop session. Native input-helper code is unchanged.
