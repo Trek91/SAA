@@ -125,3 +125,14 @@ The Mac workflow runs the same refinement checks alongside native fullscreen inp
 
 The privacy curtain hides screen content, not the saved files or OS clipboard. Capture exclusion retains existing platform limitations. Saved models shows the current model for each provider profile; it is not an archive of previously overwritten model IDs.
 
+## Selected-file assistant upgrade v0.2.0 (2026-11-13)
+
+42 automated tests pass, including bounded UTF-8/code reads, PDF page extraction, rejected scanned/malformed PDFs, archive traversal/symlink/duplicate/expansion limits, output name validation, source preservation, model-response validation, cancellation, worker failures, damaged manifest handling, crash leftovers, capability enforcement and output hash checks. Independent security review found and verified fixes for unbounded source reads, orphan recovery and damaged metadata; no concrete release blockers remain.
+
+Source and packaged Windows assistant E2E pass: real selected text/PDF/DOCX/ZIP extraction, local selection with zero requests, only selected content reaching a mock provider, actual Unicode Markdown-formatted PDF and ZIP creation/export, exact source bytes preserved, unknown output/file IDs rejected, cancellation and restart without another request. The print renderer is asserted hidden, unfocused and capture-protected. Scripts/networking are blocked; uploaded/generated code is never executed. Existing Windows desktop/Edge fullscreen, history, refinements, packaged real-mouse providers and independent pixel capture-exclusion checks pass.
+
+Both Mac architectures run signature verification, 42 tests, persistence, native fullscreen input, refinements and the assistant E2E before archiving the tested bundle. Build evidence: https://github.com/Trek91/SAA/actions/runs/43376961862 .
+
+The model gets a fixed tool-less assistant system instruction plus the explicit task and selected extracted text. This provides a controlled workflow, not an unrestricted autonomous computer agent. Prompt-injected file text cannot grant tools or access unselected IDs. Findings still need human review; output verification concerns file structure/integrity, not truthfulness. Workers are responsiveness/isolation boundaries within the process, not OS security sandboxes. PDF rendering uses a separate sandboxed Electron renderer.
+
+Known limits: source text is bounded; PDF pages without text require OCR; encrypted documents and legacy Office formats are unsupported. Task storage is plaintext under userData/assistant, separately deletable without removing chat history; exported copies are not removed by task deletion. Native pick/save dialogs intentionally switch to interactive mode. Mac recorder exclusion limitations and first-launch approval remain unchanged.

@@ -44,6 +44,8 @@ jobs:
           cat > notes.md <<'EOF'
           Ready-to-run Mac applications: no Node.js or source build required.
 
+          v0.2.0 adds the Files workspace: selected-file text/PDF/DOCX/ZIP analysis, a bounded prepare/analyze/generate/verify task flow, formatted PDF and ZIP creation, optional generated text/code files, selected-source previews, cancellation, completed-task history and explicit export. Source files remain intact; the agent has no computer-command or directory-scanning access. Task outputs are stored locally without encryption. Scanned PDFs/OCR, encrypted documents and legacy Office formats are not supported in this release. File-picking/saving dialogs are interactive; configure selected files before entering browser fullscreen.
+
           Includes visible answer/code copy controls, local code highlighting, a privacy curtain, blocked remote reply images, a wider compact layout, and a saved-model overview in Settings. Existing provider credentials and conversations are retained when updating in place.
 
           - Apple Silicon (M-series): download the arm64 ZIP or DMG.

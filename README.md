@@ -1,5 +1,19 @@
 # SAA
 
+## v0.2.0 selected-file assistant
+
+Install `release/SAA-0.2.0-Setup.exe` on Windows, or download the [Mac app](https://github.com/Trek91/SAA/releases/tag/mac-v0.2.0). Quit the old app before updating. Existing chats and provider settings use the same data folder and format.
+
+Open **Files**, choose PDF/DOCX/ZIP or UTF-8 text/code files, inspect the extracted text, describe your task and select PDF/ZIP outputs. **Start task** sends only those selected files' extracted text and your instructions to the configured model. Selection itself is local. No other conversations, credentials or computer files are supplied. The assistant follows a bounded prepare → analyze → generate → verify workflow; it has no shell, browser, directory scanning, uploaded-code execution or model-selected filesystem paths.
+
+Outputs include `report.md`, an optional formatted Unicode PDF, an optional ZIP, and up to ten text/code files suggested by the model. ZIPs can include originals only when you select that option. Results appear after format/integrity verification; that does not verify the factual accuracy of AI conclusions. Each Save action opens a native destination dialog. Originals selected in the current session cannot be overwritten. Completed tasks can be reopened or deleted from **Completed tasks** and survive restart without resending a request. Selected source files are memory-only and must be selected again after restart.
+
+Limits: 12 files, 20 MB each, 40 MB total; 100 ZIP entries / 40 MB expanded; 200 PDF pages; 120,000 extracted text characters. Parsing workers have a 30-second timeout and tasks a three-minute timeout. Scanned PDFs need OCR, which is not included. Password-protected PDFs/ZIPs, legacy DOC, Excel formats and recursive nested archives are not supported. Unsupported members inside ZIPs are listed without reading their content. Parsing workers keep processing off the UI thread; they are not security sandboxes or hard total-memory limits.
+
+Privacy: task reports, manifests and outputs are saved **unencrypted** under the application data folder's `assistant` directory. They can contain sensitive selected-file content. Use task deletion for local cleanup; files previously exported elsewhere remain yours to manage. Provider credentials retain OS encryption. The privacy curtain covers this workspace; PDF rendering stays hidden, unfocused, capture-protected, script-free and network-blocked. File selection and export use interactive system dialogs, so choose files before browser fullscreen and switch back to passive mode afterward. Existing capture-exclusion platform limits remain.
+
+`npm run check:assistant` checks real text/PDF/DOCX/ZIP ingestion, selected-only request context, real PDF/ZIP export, source preservation, capability rejection, renderer privacy, cancellation, chat access and restart. The 42-test suite includes malicious archives, limits, output tampering, unknown IDs, damaged manifests and crash leftovers. No real API keys or paid calls are used by these checks.
+
 ## v0.1.8 interface update
 
 Answers have a visible **Copy answer** button and fenced code blocks have **Copy code**, a language label and local syntax colors. Clipboard failures appear beside the control. Markdown is memoized for unchanged messages, and scrolling up during a response pauses automatic scrolling. Remote images embedded in model output are blocked to prevent tracking requests; your own image attachments continue to display.

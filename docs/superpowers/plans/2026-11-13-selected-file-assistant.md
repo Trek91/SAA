@@ -48,4 +48,4 @@ Files: src/components/AssistantPanel.tsx, src/domain/types.ts, src/infrastructur
 Files: scripts/verify-assistant.cjs, .github/workflows/build-macos.yml, package.json, README.md, docs/QA.md.
 - [x] Local fixture end-to-end: select/analyze text/PDF/ZIP, mock provider context, create/read PDF and ZIP, cancel, blocked IDs/paths, restart.
 - [x] Existing tests: copying/refinements, provider credentials, history, desktop fullscreen/capture.
-- [ ] Build Windows installer and both Mac versions; execute packaged checks before publishing. Record limits (OCR/legacy Office not included).
+- [x] Build Windows installer and both Mac versions; execute packaged checks before publishing. Record limits (OCR/legacy Office not included).

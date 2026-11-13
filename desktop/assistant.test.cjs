@@ -226,7 +226,7 @@ test("bounded reader rejects links/oversize files and startup recovers orphaned 
         destination: "example.test",
         model: "test",
         report: "report",
-        outputs: [],
+        outputs: [{id:randomUUID(),name:'report.md',size:0,hash:'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}],
       }),
     );
     const app = createAssistant(f.hooks);

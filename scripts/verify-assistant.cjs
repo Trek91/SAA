@@ -289,6 +289,7 @@ const { fileWorker } = require("../desktop/assistant.cjs");
     state = await page.evaluate(() => window.saa.assistantState());
     assert.equal(state.files.length, 0);
     assert.equal(count, 2);
+    if(await page.locator(".floating-notice").count())await page.locator(".floating-notice").click();
     await page.screenshot({
       path: path.join(__dirname, "../docs/assistant-preview.png"),
     });
