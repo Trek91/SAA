@@ -115,3 +115,13 @@ Windows source build and persistence checks passed during this change; the Windo
 
 Limits: tests cover virtual GitHub Mac desktops, not every physical Mac/browser/OS/display layout. Complex IME/dead-key composition or Secure Input may need interactive mode. ScreenCaptureKit-based external recorders can capture a protected window; universal capture invisibility is not provided by macOS. SAA hides itself briefly for its own screenshots, then restores the window without activation. Distribution remains unnotarized and needs the usual first-launch approval on a downloaded app.
 
+# Chat refinements, v0.1.8 (2026-11-13)
+
+Added visible answer/code copy buttons with success and error feedback, exact source-code copying, local syntax highlighting with unknown-language fallback, memoized markdown, scroll-follow that pauses when reading older output, an opaque privacy curtain, blocked external markdown images, and saved model names per provider. Compact bounds are now 760×560 where possible (600×400 minimum). Provider, history and native input protocols are unchanged.
+
+Windows source build, 32 shared tests, desktop/fullscreen/capture smoke checks and history persistence checks pass. The packaged Windows app passes `verify-refinements.cjs` (exact clipboard contents, syntax tokens, blocked network images, curtain visibility, readable compact dimensions, saved-model selection without activation) and `check:providers` (real native mouse interaction, unchanged foreground, provider routing/credentials/validation and restart).
+
+The Mac workflow runs the same refinement checks alongside native fullscreen input and persistence on both architectures. Its mouse fixture now waits for the native hover acknowledgement before clicking, avoiding a cold Accessibility-tree race in the fixture. Full verification: https://github.com/Trek91/SAA/actions/runs/43368979108 .
+
+The privacy curtain hides screen content, not the saved files or OS clipboard. Capture exclusion retains existing platform limitations. Saved models shows the current model for each provider profile; it is not an archive of previously overwritten model IDs.
+
