@@ -1,5 +1,13 @@
 # SAA
 
+## v0.1.8 interface update
+
+Answers have a visible **Copy answer** button and fenced code blocks have **Copy code**, a language label and local syntax colors. Clipboard failures appear beside the control. Markdown is memoized for unchanged messages, and scrolling up during a response pauses automatic scrolling. Remote images embedded in model output are blocked to prevent tracking requests; your own image attachments continue to display.
+
+**Hide content** places an opaque privacy curtain over the conversation/settings while keeping the session and requests running. It does not delete history or clear the system clipboard. Existing screen-capture exclusion and passive input behavior are preserved. Compact mode now uses a readable 760×560 window where the display allows, with a 600-pixel minimum width. **Settings → Saved models** shows the currently configured model for every provider without exposing credentials; selecting a row opens that provider's editor and does not activate it until saved.
+
+Windows update: `release/SAA-0.1.8-Setup.exe`. [Mac v0.1.8 downloads](https://github.com/Trek91/SAA/releases/tag/mac-v0.1.8). Quit the previous app before installing/replacing it. Existing settings and chats stay in the same application data folder.
+
 A floating AI chatbot inspired by Pluely, built in this folder. The reference folder is unchanged.
 
 ## GitHub and macOS

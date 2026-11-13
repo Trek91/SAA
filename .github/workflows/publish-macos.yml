@@ -44,6 +44,8 @@ jobs:
           cat > notes.md <<'EOF'
           Ready-to-run Mac applications: no Node.js or source build required.
 
+          Includes visible answer/code copy controls, local code highlighting, a privacy curtain, blocked remote reply images, a wider compact layout, and a saved-model overview in Settings. Existing provider credentials and conversations are retained when updating in place.
+
           - Apple Silicon (M-series): download the arm64 ZIP or DMG.
           - Intel Mac: download the x64 ZIP or DMG.
 
