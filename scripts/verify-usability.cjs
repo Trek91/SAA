@@ -48,7 +48,10 @@ const {once}=require('node:events');
   await page.locator('input[type=file]').setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3xQAAAAASUVORK5CYII=','base64')});
   await page.getByRole('button',{name:'Remove fixture.png',exact:true}).waitFor();
   await open('Shopping');assert.equal(await page.locator('.attachments img').count(),0);
-  await open('Research notes');await page.getByRole('button',{name:'Remove fixture.png',exact:true}).click();
+  await open('Research notes');
+  await sidebar().getByRole('button',{name:'Close chat sidebar',exact:true}).click();
+  await page.getByRole('button',{name:'Remove fixture.png',exact:true}).click();
+  await page.getByRole('button',{name:'Toggle chat sidebar',exact:true}).click();
   // Narrow mode overlays the sidebar instead of shrinking the message column.
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(760,650));
   const narrow=await page.locator('.conversation-main').boundingBox();assert.ok(narrow.width>=650);
