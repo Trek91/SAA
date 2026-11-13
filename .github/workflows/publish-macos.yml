@@ -59,4 +59,8 @@ jobs:
 
           These builds are ad-hoc signed, not Apple-notarized. If blocked on first launch, approve SAA in System Settings > Privacy & Security > Open Anyway. macOS ScreenCaptureKit recorders may capture the window despite exclusion being enabled; universal capture invisibility cannot be guaranteed. SAA hides its own panel briefly during its screen attachments to keep it out of the image.
           EOF
-          gh release create "mac-v$VERSION" SAA-*-mac-*.zip SAA-*-mac-*.dmg SHA256SUMS-*.txt --target "$BUILD_SHA" --title "SAA $VERSION for macOS (Apple Silicon and Intel)" --notes-file notes.md --prerelease --latest=false
+          if gh release view "mac-v$VERSION" >/dev/null 2>&1; then
+            gh release upload "mac-v$VERSION" SAA-*-mac-*.zip SAA-*-mac-*.dmg SHA256SUMS-*.txt --clobber
+          else
+            gh release create "mac-v$VERSION" SAA-*-mac-*.zip SAA-*-mac-*.dmg SHA256SUMS-*.txt --target "$BUILD_SHA" --title "SAA $VERSION for macOS (Apple Silicon and Intel)" --notes-file notes.md --prerelease --latest=false
+          fi
