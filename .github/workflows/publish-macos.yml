@@ -44,7 +44,9 @@ jobs:
           cat > notes.md <<'EOF'
           Ready-to-run Mac applications: no Node.js or source build required.
 
-          v0.2.0 adds the Files workspace: selected-file text/PDF/DOCX/ZIP analysis, a bounded prepare/analyze/generate/verify task flow, formatted PDF and ZIP creation, optional generated text/code files, selected-source previews, cancellation, completed-task history and explicit export. Source files remain intact; the agent has no computer-command or directory-scanning access. Task outputs are stored locally without encryption. Scanned PDFs/OCR, encrypted documents and legacy Office formats are not supported in this release. File-picking/saving dialogs are interactive; configure selected files before entering browser fullscreen.
+          v0.2.1 adds searchable conversations, rename/pin/archive, deletion undo, a collapsible sidebar that preserves reading width on small windows, separate durable text drafts per chat, saved selected chat/sidebar/Latest preference, remembered normal and compact window bounds, off-screen recovery, reading-position restoration and Jump to latest. Drafts are plaintext like chat history; unsent image drafts remain in memory only.
+
+          Includes the Files workspace: selected-file text/PDF/DOCX/ZIP analysis, a bounded prepare/analyze/generate/verify task flow, formatted PDF and ZIP creation, optional generated text/code files, selected-source previews, cancellation, completed-task history and explicit export. Source files remain intact; the agent has no computer-command or directory-scanning access. Task outputs are stored locally without encryption. Scanned PDFs/OCR, encrypted documents and legacy Office formats are not supported in this release. File-picking/saving dialogs are interactive; configure selected files before entering browser fullscreen.
 
           Includes visible answer/code copy controls, local code highlighting, a privacy curtain, blocked remote reply images, a wider compact layout, and a saved-model overview in Settings. Existing provider credentials and conversations are retained when updating in place.
 
@@ -53,7 +55,7 @@ jobs:
 
           Extract the ZIP to get SAA.app, move it to Applications, then open it. Alternatively, open the DMG and drag SAA to Applications.
 
-          Both packages were built on matching GitHub Mac runners and passed shared tests, signature verification, packaged chat persistence/restart, and native passive input tests over a fullscreen Chromium fixture. The desktop check covers provider profiles/auth/validation, SSE, clipboard, opacity, compact mode, click-through, screen capture and mode switching. Enter your API settings again on the Mac; credentials and conversations are not bundled.
+          Both packages were built on matching GitHub Mac runners and passed shared tests, signature verification, packaged chat persistence/restart, native passive input tests over a fullscreen Chromium fixture, selected-file assistant/PDF/ZIP checks, and chat organization/drafts/layout/corruption-recovery checks. The desktop check covers provider profiles/auth/validation, SSE, clipboard, opacity, compact mode, click-through, screen capture and mode switching. Enter your API settings again on the Mac; credentials and conversations are not bundled.
 
           Enable SAA in System Settings > Privacy & Security > Accessibility for passive fullscreen typing. Enable Screen & System Audio Recording for screen attachments. SAA includes setup buttons and detects permission changes. Restart if macOS asks. Physical-device checks are still needed for your browser, keyboard layout/IME, multiple displays and macOS version.
 

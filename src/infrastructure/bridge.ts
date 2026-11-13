@@ -3,6 +3,7 @@ export const isDesktop = !!window.saa;
 let previewSettings=defaults;
 // The browser preview is deliberately local-only. Credentials and HTTP belong to the desktop host.
 export const bridge: DesktopBridge = window.saa ?? {
+  async saveWorkspace(patch){const current=JSON.parse(localStorage.getItem('saa.preview.workspace')||'{"drafts":{},"sidebarOpen":false,"latest":true}');if(patch.draft)current.drafts[patch.draft.id]=patch.draft.text;for(const key of ['currentId','sidebarOpen','latest']as const)if(patch[key]!==undefined)current[key]=patch[key];localStorage.setItem('saa.preview.workspace',JSON.stringify(current));},
   async assistantState(){return{status:'idle',stage:'Open the desktop app to work with files',files:[],outputs:[],report:'',error:'',destination:''};},
   async assistantPick(){throw Error('File tools require the desktop app.');},
   async assistantRun(){throw Error('File tasks require the desktop app.');},
@@ -13,7 +14,7 @@ export const bridge: DesktopBridge = window.saa ?? {
   async load() {
     let conversations = [];
     try { conversations = JSON.parse(localStorage.getItem('saa.preview.history') ?? '[]'); } catch { /* recover empty history */ }
-    return { settings: previewSettings, conversations: Array.isArray(conversations) ? conversations : [], mode: 'passive', clickThrough: false };
+    return { settings: previewSettings, conversations: Array.isArray(conversations) ? conversations : [], workspace:JSON.parse(localStorage.getItem('saa.preview.workspace')||'{"drafts":{},"sidebarOpen":false,"latest":true}'),mode: 'passive', clickThrough: false };
   },
   async saveSettings(value) { previewSettings={...value,apiKey:'',hasKey:false,providers:Object.fromEntries(Object.entries(value.providers).map(([id,p])=>[id,{...p,apiKey:'',hasKey:false}]))as Settings['providers']};return previewSettings; },
   async selectProvider(id){previewSettings={...previewSettings,...previewSettings.providers[id],activeProvider:id};return previewSettings;},

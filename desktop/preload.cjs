@@ -8,6 +8,7 @@ const subscribe = (channel, callback) => {
 };
 contextBridge.exposeInMainWorld('saa', Object.freeze({
   load: () => ipcRenderer.invoke('saa:load'),
+  saveWorkspace:patch=>ipcRenderer.invoke('saa:saveWorkspace',patch),
   assistantState:()=>ipcRenderer.invoke('saa:assistantState'),
   assistantPick:()=>ipcRenderer.invoke('saa:assistantPick'),
   assistantRun:request=>ipcRenderer.invoke('saa:assistantRun',request),

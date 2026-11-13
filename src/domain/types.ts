@@ -7,7 +7,8 @@ export interface ProviderConfig {
 export interface Settings extends ProviderConfig {opacity:number;alwaysOnTop:boolean;captureExclusion:boolean;activeProvider:ProviderId;providers:Record<ProviderId,ProviderConfig>}
 export interface Attachment { id: string; name: string; url: string }
 export interface Message { id: string; role: 'user' | 'assistant'; content: string; images?: Attachment[] }
-export interface Conversation { id: string; title: string; updatedAt: number; messages: Message[] }
+export interface Conversation { id: string; title: string; updatedAt: number; messages: Message[];pinned?:boolean;archived?:boolean }
+export interface Workspace {drafts:Record<string,string>;currentId?:string|null;sidebarOpen:boolean;latest:boolean;compact?:boolean}
 export interface AssistantState {status:string;stage:string;files:{id:string;name:string;size:number;characters:number;pages?:number;preview:string;entries?:{name:string;size:number}[]}[];outputs:{id:string;name:string;size:number}[];tasks?:{id:string;createdAt:number;title:string;outputCount:number}[];report:string;error:string;destination:string;taskId?:string;taskModel?:string}
 export type Mode = 'passive' | 'interactive';
 export interface DesktopPermissions {platform:string;passiveReady:boolean;accessibility:boolean;screen:string}
@@ -39,7 +40,8 @@ export interface DesktopBridge {
   assistantOpenTask(id:string):Promise<AssistantState>;
   assistantDeleteTask(id:string):Promise<AssistantState>;
   onAssistant(callback:(state:AssistantState)=>void):()=>void;
-  load(): Promise<{ settings: Settings; conversations: Conversation[]; mode: Mode; clickThrough: boolean; shortcutsFailed?: string[]; compact?: boolean; storageWarning?: string;permissions?:DesktopPermissions }>;
+  load(): Promise<{ settings: Settings; conversations: Conversation[]; workspace?:Workspace;mode: Mode; clickThrough: boolean; shortcutsFailed?: string[]; compact?: boolean; storageWarning?: string;permissions?:DesktopPermissions }>;
+  saveWorkspace(patch:{draft?:{id:string;text:string};currentId?:string|null;sidebarOpen?:boolean;latest?:boolean}):Promise<unknown>;
   permissions(action:'status'|'accessibility'|'screen'):Promise<DesktopPermissions>;
   saveSettings(value: Settings): Promise<Settings>;
   selectProvider(id:ProviderId):Promise<Settings>;

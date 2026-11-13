@@ -4,10 +4,10 @@ This repository contains the source, not your Windows installation or personal d
 
 ## Download the app directly
 
-Open [Mac downloads](https://github.com/Trek91/SAA/releases/tag/mac-v0.1.7) while signed into an account with access to this private repository.
+Open [Mac downloads](https://github.com/Trek91/SAA/releases/tag/mac-v0.2.1) while signed into an account with access to this private repository.
 
-- Apple Silicon (M-series): choose `SAA-0.1.7-mac-arm64.zip` or `.dmg`.
-- Intel: choose `SAA-0.1.7-mac-x64.zip` or `.dmg`.
+- Apple Silicon (M-series): choose `SAA-0.2.1-mac-arm64.zip` or `.dmg`.
+- Intel: choose `SAA-0.2.1-mac-x64.zip` or `.dmg`.
 
 Extract the ZIP to get `SAA.app`, move it to Applications, then double-click it. Alternatively, open the DMG and drag SAA to Applications. Node.js and Git are not required for these downloads. If macOS blocks the first launch, use System Settings > Privacy & Security > Open Anyway for the downloaded SAA application. These builds are ad-hoc signed, not Apple-notarized.
 
@@ -62,7 +62,7 @@ The DMG and ZIP are created in `release/`, named with the architecture. Open the
 
 ## Platform differences to test
 
-- Chat, provider profiles, history and transparency use the shared Electron application. History is stored in `~/Library/Application Support/SAA/conversations.json`.
+- Chat, provider profiles, history and transparency use the shared Electron application. History is stored in `~/Library/Application Support/SAA/conversations.json`; per-chat text drafts and layout use `workspace.json` in the same folder. Both are plaintext. Unsent image drafts are memory-only.
 - Mac passive typing uses `SaaInputMac.m` and requires Accessibility permission. Windows continues using `SaaInput.cs`. The common renderer handles fields, buttons, copy/paste and editing. macOS supports Command editing shortcuts; Option+Arrow/Backspace moves/deletes by word. Advanced IME composition should use interactive mode.
 - Always-on-top/fullscreen workspace visibility is requested through Electron. Verify behavior in your actual browser on the Mac.
 - Capture exclusion is best-effort on macOS: ScreenCaptureKit-based recorders can capture protected windows. There is no supported universal guarantee of invisibility to other Mac recording applications. SAA temporarily hides its own panel during its screen capture and shows it again without requesting focus.

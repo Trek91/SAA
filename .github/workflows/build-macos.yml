@@ -54,6 +54,8 @@ jobs:
         run: node scripts/verify-refinements.cjs
       - name: Verify selected files, PDF/ZIP outputs and assistant lifecycle
         run: npm run check:assistant
+      - name: Verify chat organization, drafts, layout and restart
+        run: npm run check:usability
       - name: Package the tested app as ZIP and DMG
         run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --prepackaged "${SAA_TEST_EXECUTABLE%/Contents/MacOS/SAA}" --publish never
       - name: Calculate download checksums

@@ -11,6 +11,7 @@ const { createSettingsTransaction, backupUnreadable } = require('./storage.cjs')
 const { readClipboardData, writeClipboardData } = require('./clipboard.cjs');
 const { createPassiveInput } = require('./passive-input.cjs');
 const {createHistoryStore}=require('./history.cjs');
+const {validateWorkspace,patchWorkspace,fitBounds}=require('./workspace.cjs');
 const {createAssistant}=require('./assistant.cjs');
 const {printReport}=require('./report-pdf.cjs');
 const {dialog}=require('electron');
@@ -23,7 +24,7 @@ let win, tray, settings = normalizeSettings({}), mode = 'passive', clickThrough 
 let conversations = [], shortcutsFailed = [], storageWarning = '', normalBounds;
 const active = new Map();
 const activeTasks=new Set();
-let historyStore,shutdownPending=false,quitAfterFlush=false;
+let historyStore,workspaceStore,shutdownPending=false,quitAfterFlush=false;
 const queues = new Map();
 const blockedFiles = new Set();
 let capturePending;
@@ -64,6 +65,7 @@ function validateHistory(value) {
   if (!Array.isArray(value) || value.length > 200) throw new Error('Keep at most 200 conversations. Export or delete older chats first.');
   if (Buffer.byteLength(JSON.stringify(value)) > 24 * 1024 * 1024) throw new Error('History exceeds the 24 MB local storage limit.');
   for (const chat of value) {
+    for(const key of ['pinned','archived'])if(chat?.[key]!==undefined&&typeof chat[key]!=='boolean')throw new Error('Invalid conversation organization.');
     if (!chat || typeof chat.id !== 'string' || chat.id.length > 128 || typeof chat.title !== 'string' || chat.title.length > 10000 || !Number.isFinite(chat.updatedAt) || !Array.isArray(chat.messages)) throw new Error('Invalid conversation data.');
     if (chat.messages.length) cleanMessages(chat.messages);
     for (const message of chat.messages) {
@@ -99,7 +101,11 @@ async function loadStorage() {
   try { conversations = validateHistory(JSON.parse((await readBounded(historyFile, 24 * 1024 * 1024)).toString('utf8'))); }
   catch (error) { if (error.code !== 'ENOENT') await recover(historyFile, 'Saved history'); }
   historyStore=createHistoryStore({initial:conversations,write:async next=>{validateHistory(next);await atomicWrite(historyFile,JSON.stringify(next));},onError:error=>send('saa:action',{type:'error',text:`Could not save chat history: ${error.message}`})});
+  const workspaceFile=path.join(app.getPath('userData'),'workspace.json');let workspace=validateWorkspace({});
+  try{workspace=validateWorkspace(JSON.parse((await readBounded(workspaceFile,1024*1024)).toString('utf8')));}catch(error){if(error.code!=='ENOENT')await recover(workspaceFile,'Saved workspace');}
+  workspaceStore=createHistoryStore({initial:workspace,write:next=>atomicWrite(workspaceFile,JSON.stringify(validateWorkspace(next))),onError:error=>send('saa:action',{type:'error',text:`Could not save workspace: ${error.message}`})});
 }
+function rememberWindow(){if(!workspaceStore||!win||win.isDestroyed()||quitting)return;try{const current=workspaceStore.get(),key=compact?'compactBounds':'normalBounds';workspaceStore.replace(validateWorkspace({...current,[key]:win.getBounds(),compact}),{defer:true});}catch(error){send('saa:action',{type:'error',text:`Could not remember window layout: ${error.message}`});}}
 function updateSavedAnswer(chatId,messageId,text){
   const next=historyStore.get().map(chat=>chat.id===chatId?{...chat,updatedAt:Date.now(),messages:chat.messages.map(message=>message.id===messageId?{...message,content:message.content+text}:message)}:chat);
   historyStore.replace(next,{defer:true});
@@ -216,7 +222,8 @@ function setupIPC() {
   handle('assistantExport',id=>assistant.exportOutput(id));
   handle('assistantOpenTask',id=>assistant.openTask(id));
   handle('assistantDeleteTask',id=>assistant.deleteTask(id));
-  handle('load', () => ({ settings: publicSettings(), conversations:historyStore.get(), mode, clickThrough, compact, shortcutsFailed, storageWarning,permissions:permissions() }));
+  handle('load', () => ({ settings: publicSettings(), conversations:historyStore.get(), workspace:workspaceStore.get(),mode, clickThrough, compact, shortcutsFailed, storageWarning,permissions:permissions() }));
+  handle('saveWorkspace',patch=>{workspaceStore.replace(patchWorkspace(workspaceStore.get(),patch),{defer:true});return true;});
   handle('permissions',async action=>{
     if(!['status','accessibility','screen'].includes(action))throw new Error('Unknown permission action.');
     if(process.platform==='darwin'){
@@ -301,8 +308,9 @@ function setupIPC() {
       case 'pin': await mutateSettings((current) => ({ ...current, alwaysOnTop: !current.alwaysOnTop })); break;
       case 'compact':
         compact = !compact;
-        if (compact) { normalBounds = win.getBounds();const area=screen.getDisplayMatching(normalBounds).workArea;win.setMinimumSize(600,400);win.setSize(Math.min(760,area.width),Math.min(560,area.height)); }
-        else { win.setMinimumSize(600, 480); if (normalBounds) win.setBounds(normalBounds); }
+        if (compact) { normalBounds = win.getBounds();workspaceStore.replace({...workspaceStore.get(),normalBounds},{defer:true});const area=screen.getDisplayMatching(normalBounds).workArea;win.setMinimumSize(600,400);win.setSize(Math.min(760,area.width),Math.min(560,area.height)); }
+        else { win.setMinimumSize(600, 480); if (normalBounds) win.setBounds(fitBounds(normalBounds,screen.getAllDisplays().map(d=>d.workArea))); }
+        rememberWindow();
         send('saa:action', { type: 'compact', compact }); break;
       case 'quit': app.quit(); break;
       default: throw new Error('Unknown window action.');
@@ -324,9 +332,11 @@ function createTray() {
 
 function createWindow() {
   const area = screen.getPrimaryDisplay().workArea;
+  const workspace=workspaceStore.get();compact=workspace.compact;normalBounds=workspace.normalBounds;
+  const restored=fitBounds(compact?workspace.compactBounds:workspace.normalBounds,screen.getAllDisplays().map(d=>d.workArea));
   win = new BrowserWindow({
     ...(process.platform==='darwin'?{type:'panel'}:{}),
-    width: Math.min(1100, area.width - 40), height: Math.min(760, area.height - 40), minWidth: 600, minHeight: 480,
+    ...restored,minWidth:Math.min(600,area.width),minHeight:Math.min(compact?400:480,area.height),
     frame: false, transparent: true, backgroundColor: '#00000000', show: false, focusable: false,
     icon:path.join(__dirname,'..','build',process.platform==='darwin'?'icon-mac.png':'icon.ico'),
     skipTaskbar: true, alwaysOnTop: settings.alwaysOnTop, title: 'SAA',
@@ -346,6 +356,8 @@ function createWindow() {
   win.once('ready-to-show', showPassive);
   win.on('close', (event) => { if (!quitting) { event.preventDefault(); hideWindow(); } });
   win.on('hide',()=>passiveInput?.state(false));
+  win.on('move',rememberWindow);win.on('resize',rememberWindow);
+  screen.on('display-removed',()=>{if(!win.isDestroyed()){win.setBounds(fitBounds(win.getBounds(),screen.getAllDisplays().map(d=>d.workArea)));rememberWindow();}});
   win.webContents.on('did-start-loading',()=>passiveInput?.typing(false));
   win.webContents.on('render-process-gone', () => { passiveInput?.state(false);for (const controller of active.values()) controller.abort(); active.clear(); });
   if (devURL) win.loadURL(devURL); else win.loadFile(indexPath);
@@ -372,10 +384,11 @@ else {
 app.on('before-quit', event => {
   if(quitAfterFlush)return;
   event.preventDefault();if(shutdownPending)return;
+  rememberWindow();
   shutdownPending=true;quitting=true;passiveInput?.state(false);
   for(const controller of active.values())controller.abort();
   void(async()=>{
-    try{await assistant?.close();await Promise.allSettled([...activeTasks]);await historyStore?.flush();await Promise.all([...queues.values()]);passiveInput?.close();quitAfterFlush=true;app.quit();}
+    try{await assistant?.close();await Promise.allSettled([...activeTasks]);await historyStore?.flush();await workspaceStore?.flush();await Promise.all([...queues.values()]);passiveInput?.close();quitAfterFlush=true;app.quit();}
     catch(error){shutdownPending=false;quitting=false;if(win&&!win.isDestroyed()){showPassive();send('saa:action',{type:'error',text:`SAA stayed open because your data could not be saved: ${error.message}`});}}
   })();
 });

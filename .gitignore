@@ -11,6 +11,7 @@ desktop/native/SaaInputMac
 !.env.example
 settings.enc
 conversations.json
+workspace.json
 Local State
 *.recovery*
 .DS_Store

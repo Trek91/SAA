@@ -1,5 +1,17 @@
 # SAA
 
+## v0.2.1 daily usability
+
+Install `release/SAA-0.2.1-Setup.exe` on Windows, or download the [Mac app](https://github.com/Trek91/SAA/releases/tag/mac-v0.2.1). Quit the old app before updating; existing conversations, credentials and completed file tasks are retained.
+
+Use the sidebar button beside **Files** to open searchable conversations alongside chat. Search matches titles and message text. Rename, pin, archive/unarchive and delete chats from either the sidebar or History; **Undo deletion** restores the most recently deleted chat during the current session. Archived chats stay locally saved. On narrower windows, the sidebar floats over chat instead of shrinking its reading width.
+
+Each chat and **New chat** now keeps a separate text draft. The selected chat, sidebar state, Latest/All preference, window position/size and compact mode survive normal Quit/restart. Returning from History or Settings restores the reading position during the session. Scrolling up pauses automatic following; **Jump to latest** returns to the bottom. Restored windows are clamped to a connected display.
+
+Drafts and layout are stored **unencrypted** in `workspace.json` alongside existing plaintext history. Text drafts are bounded to 100,000 characters each and about 1 MB total; window metadata has reserved space. Unsent image drafts survive chat switches in memory only and are not restored after quitting. Normal Quit flushes pending saves; a forced kill can interrupt the latest checkpoint. A damaged workspace is backed up before resetting layout/drafts, independently of history and credentials.
+
+`npm run check:usability` verifies organization/search, deletion undo, separate drafts, image switching, narrow layout/privacy, streaming scroll, window restoration, restart and corrupt-workspace recovery using a disposable profile and local mock provider. Native fullscreen input and capture protections remain unchanged.
+
 ## v0.2.0 selected-file assistant
 
 Install `release/SAA-0.2.0-Setup.exe` on Windows, or download the [Mac app](https://github.com/Trek91/SAA/releases/tag/mac-v0.2.0). Quit the old app before updating. Existing chats and provider settings use the same data folder and format.
@@ -12,7 +24,7 @@ Limits: 12 files, 20 MB each, 40 MB total; 100 ZIP entries / 40 MB expanded; 200
 
 Privacy: task reports, manifests and outputs are saved **unencrypted** under the application data folder's `assistant` directory. They can contain sensitive selected-file content. Use task deletion for local cleanup; files previously exported elsewhere remain yours to manage. Provider credentials retain OS encryption. The privacy curtain covers this workspace; PDF rendering stays hidden, unfocused, capture-protected, script-free and network-blocked. File selection and export use interactive system dialogs, so choose files before browser fullscreen and switch back to passive mode afterward. Existing capture-exclusion platform limits remain.
 
-`npm run check:assistant` checks real text/PDF/DOCX/ZIP ingestion, selected-only request context, real PDF/ZIP export, source preservation, capability rejection, renderer privacy, cancellation, chat access and restart. The 42-test suite includes malicious archives, limits, output tampering, unknown IDs, damaged manifests and crash leftovers. No real API keys or paid calls are used by these checks.
+`npm run check:assistant` checks real text/PDF/DOCX/ZIP ingestion, selected-only request context, real PDF/ZIP export, source preservation, capability rejection, renderer privacy, cancellation, chat access and restart. The 46-test suite includes malicious archives, limits, output tampering, unknown IDs, damaged manifests and crash leftovers. No real API keys or paid calls are used by these checks.
 
 ## v0.1.8 interface update
 
@@ -26,15 +38,15 @@ A floating AI chatbot inspired by Pluely, built in this folder. The reference fo
 
 ## GitHub and macOS
 
-Private source repository: https://github.com/Trek91/SAA. [Download the Mac app](https://github.com/Trek91/SAA/releases/tag/mac-v0.1.7), or see [Mac setup and packaging](docs/MACOS.md) for source builds and required permissions. Mac passive fullscreen typing now has a native implementation. Apple Silicon and Intel bundles pass signature verification, packaged history/restart checks, and real native mouse/key tests over a fullscreen Chromium fixture on GitHub Mac runners. Enable Accessibility in macOS before using passive typing. ScreenCaptureKit recorders may still capture protected windows; SAA hides its panel briefly for its own screen attachments. Dependencies, generated executables, API credentials and conversation history are excluded from Git.
+Private source repository: https://github.com/Trek91/SAA. [Download the Mac app](https://github.com/Trek91/SAA/releases/tag/mac-v0.2.1), or see [Mac setup and packaging](docs/MACOS.md) for source builds and required permissions. Mac passive fullscreen typing now has a native implementation. Apple Silicon and Intel bundles pass signature verification, packaged history/restart checks, and real native mouse/key tests over a fullscreen Chromium fixture on GitHub Mac runners. Enable Accessibility in macOS before using passive typing. ScreenCaptureKit recorders may still capture protected windows; SAA hides its panel briefly for its own screen attachments. Dependencies, generated executables, API credentials and conversation history are excluded from Git.
 
-Install with `release/SAA-0.1.6-Setup.exe`. The installer adds **SAA** to your Start menu and desktop for your Windows account. Press the Windows key, type **SAA**, and open it; right-click the result and choose **Pin to Start** for a pinned Start icon. Installation does not require administrator access. **Launch SAA.cmd** prefers the installed Start menu shortcut, then the v0.1.6 portable executable if available.
+Install with `release/SAA-0.2.1-Setup.exe`. The installer adds **SAA** to your Start menu and desktop for your Windows account. Press the Windows key, type **SAA**, and open it; right-click the result and choose **Pin to Start** for a pinned Start icon. Installation does not require administrator access. **Launch SAA.cmd** prefers the installed Start menu shortcut, then the v0.2.1 portable executable if available.
 
 Open **Settings**, choose an active provider, enter its endpoint/model/key, then save. Passive mode supports typing without activating the window. API configuration is encrypted locally using Windows protection. Local chat history is plaintext in the app data directory.
 
 ## Chat persistence
 
-Installed and portable versions share `%APPDATA%\SAA` on this Windows account, outside the application folder. Existing settings and history are reused. On launch, SAA opens the latest saved conversation; **History** lists the others and **New chat** starts a fresh conversation.
+Installed and portable versions share `%APPDATA%\SAA` on this Windows account, outside the application folder. Existing settings and history are reused. On launch, SAA restores your selected chat, or the most recent active conversation when no selection is saved; **History** lists the others and **New chat** starts a fresh conversation.
 
 The desktop process saves the question before sending an API request. It checkpoints streamed replies on a bounded schedule and flushes the latest reply before completing a request or quitting normally. If saving fails during Quit, SAA stays open and reports the problem. Keep the app-data folder when moving or updating the application; API settings also require its `Local State` encryption metadata on the same Windows account. Uninstall is configured to retain app data.
 

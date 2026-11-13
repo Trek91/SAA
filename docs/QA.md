@@ -1,5 +1,13 @@
 # Verification — 22 October 2026
 
+## v0.2.1 daily usability — 13 November 2026
+
+- 46 shared unit checks cover provider/storage/file safety plus workspace validation, rejected renderer geometry writes, negative/off-screen monitor bounds, centered defaults and draft-capacity headroom for window metadata.
+- The usability end-to-end test checks full-text search, inline rename, pin ordering, archive/unarchive, deletion/undo with draft cleanup, separate per-chat/new-chat text drafts, memory-only image drafts, narrow sidebar reading width, privacy curtain, reading-position restoration, pause/jump during streaming, normal/compact window bounds and selected chat/layout/drafts across normal Quit/restart. A damaged workspace is backed up while existing conversations and encrypted credentials remain readable.
+- Existing local fixture checks pass for streaming/history restart, API profile isolation/validation and native provider mouse controls, copy/code colors/blocked reply images/saved models, selected-file assistant/PDF/ZIP export/cancellation and independent Windows capture exclusion.
+- Edge DOM fullscreen and document focus remain active through passive show, clipboard, click-through and capture in the desktop fixture. The separate physical-keyboard regression check could not run through in this desktop session: Windows reported ShellHost as foreground and the driver correctly refused to inject keystrokes. No native input-helper code changed in this upgrade. Physical Windows keyboard verification remains a limitation of this run.
+- Text drafts are plaintext, like chat history. Image drafts and reading positions are memory-only. Capture-exclusion platform limits still apply; no universal invisibility claim is made.
+
 ## Completed checks
 - Production TypeScript/Vite build passes.
 - 32 provider/settings/storage/history/clipboard checks pass. They cover history checkpoint coalescing, flush concurrency and recovery after write failures, compatible base URL routing and error details/redaction, profile migration/isolation, generation parameters and validation, capture privacy defaults, fragmented UTF-8 and multiline SSE, JSON fallback, final unterminated events, DONE, redirects, failures, timeout/cancel, safe custom templates, serialized settings, recovery copies, and Electron 45's asynchronous clipboard API.
