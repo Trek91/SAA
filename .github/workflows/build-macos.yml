@@ -50,6 +50,8 @@ jobs:
         run: bash scripts/prepare-macos-ci.sh
       - name: Verify native passive fullscreen input and desktop features
         run: node scripts/verify-macos.cjs
+      - name: Verify copy controls, code colors, privacy and saved models
+        run: node scripts/verify-refinements.cjs
       - name: Package the tested app as ZIP and DMG
         run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --prepackaged "${SAA_TEST_EXECUTABLE%/Contents/MacOS/SAA}" --publish never
       - name: Calculate download checksums

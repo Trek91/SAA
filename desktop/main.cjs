@@ -288,7 +288,7 @@ function setupIPC() {
       case 'pin': await mutateSettings((current) => ({ ...current, alwaysOnTop: !current.alwaysOnTop })); break;
       case 'compact':
         compact = !compact;
-        if (compact) { normalBounds = win.getBounds(); win.setMinimumSize(440, 260); win.setSize(480, 360); }
+        if (compact) { normalBounds = win.getBounds();const area=screen.getDisplayMatching(normalBounds).workArea;win.setMinimumSize(600,400);win.setSize(Math.min(760,area.width),Math.min(560,area.height)); }
         else { win.setMinimumSize(600, 480); if (normalBounds) win.setBounds(normalBounds); }
         send('saa:action', { type: 'compact', compact }); break;
       case 'quit': app.quit(); break;

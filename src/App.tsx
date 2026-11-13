@@ -28,6 +28,8 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [compact, setCompact] = useState(false);
   const [typing,setTyping]=useState(false);
+  const [privateView,setPrivateView]=useState(false);
+  const followTail=useRef(true);
   const [permissions,setPermissions]=useState<DesktopPermissions>();
   const request = useRef<{ id: string; conversationId: string } | null>(null);
   const lastAppearance = useRef<string | null>(null);
@@ -52,7 +54,8 @@ export default function App() {
 
   useEffect(() => { if (!loaded) return; if (!historyChanged.current) { historyChanged.current = true; return; } if(busy)return;void bridge.saveConversations(conversations).catch(err => setError(`Could not save history: ${String(err)}`)); }, [conversations, loaded,busy]);
   useEffect(() => { if (!loaded) return; const fingerprint = `${settings.opacity}:${settings.alwaysOnTop}`; if (lastAppearance.current === null) { lastAppearance.current = fingerprint; return; } if (lastAppearance.current === fingerprint) return; const timer = setTimeout(() => { bridge.saveAppearance({ opacity: settings.opacity, alwaysOnTop: settings.alwaysOnTop }).then(() => { lastAppearance.current = fingerprint; }).catch(err => setError(`Could not save appearance: ${String(err)}`)); }, 350); return () => clearTimeout(timer); }, [settings.opacity, settings.alwaysOnTop, loaded]);
-  useEffect(() => { if (messages.length) scroll.current?.scrollTo({ top: scroll.current.scrollHeight, behavior: 'auto' }); }, [messages.length, messages.at(-1)?.content]);
+  useEffect(()=>{followTail.current=true;},[currentId]);
+  useEffect(() => { if (messages.length&&followTail.current) scroll.current?.scrollTo({ top: scroll.current.scrollHeight, behavior: 'auto' }); }, [messages.length, messages.at(-1)?.content]);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 4000); return () => clearTimeout(timer); }, [notice]);
 
   const updateMessages = useCallback((id: string, fn: (list: Message[]) => Message[]) => {
@@ -130,15 +133,17 @@ export default function App() {
   async function selectProvider(id:ProviderId){try{setSettings(await bridge.selectProvider(id));setNotice(`${providerNames[id]} selected for new messages.`);}catch(e){setError(e instanceof Error?e.message:String(e));}}
   async function savePrivacy(enabled:boolean){setSettings(await bridge.savePrivacy({captureExclusion:enabled}));setNotice(enabled?'Screen capture exclusion enabled.':'Screen capture exclusion disabled.');}
   const style = { '--panel-opacity': settings.opacity } as CSSProperties;
-  return <main className={`app-shell ${compact ? 'compact' : ''}`} style={style}>
+  return <main className={`app-shell ${compact ? 'compact' : ''} ${privateView?'privacy-on':''}`} style={style}>
     <header className="toolbar">
       <div className="brand"><MessageCircle className="brand-icon"/><span>SAA</span></div><span className="toolbar-divider"/><button className={`chat-tab ${view === 'chat' ? 'selected' : ''}`} onClick={() => setView('chat')}>Chat</button>
       <nav><button className={view === 'history' ? 'active' : ''} disabled={busy} onClick={() => setView(view === 'history' ? 'chat' : 'history')}><History size={21}/><span>History</span></button><button className={view === 'settings' ? 'active' : ''} disabled={busy} onClick={() => setView(view === 'settings' ? 'chat' : 'settings')}><SettingsIcon size={21}/><span>Settings</span></button><IconButton className={`icon-button pin ${settings.alwaysOnTop ? 'active' : ''}`} label={settings.alwaysOnTop ? 'Unpin overlay' : 'Keep on top'} onClick={() => setSettings(s => ({ ...s, alwaysOnTop: !s.alwaysOnTop }))}><Pin size={20}/></IconButton><IconButton className="icon-button compact-button" label={compact ? 'Expand panel' : 'Compact panel'} onClick={() => { setCompact(!compact); void action('compact'); }}><Grip size={21}/></IconButton><IconButton className="icon-button" label="Hide overlay · Ctrl+Shift+Space" onClick={() => isDesktop ? void action('hide') : setNotice('Show / hide works in the desktop app.')}><Minus size={21}/></IconButton></nav>
     </header>
+    <button type="button" className="privacy-toggle" aria-label={privateView?'Show content':'Hide content'} aria-pressed={privateView} onClick={()=>{setPrivateView(!privateView);void bridge.passiveControl('release');}}>{privateView?'Show content':'Hide content'}</button>
+    {privateView&&<div className="privacy-curtain"><MessageCircle size={28}/><strong>Content hidden</strong><p>Your conversation stays open. Responses continue in the background.</p><button type="button" className="secondary-button" onClick={()=>setPrivateView(false)}>Show conversation</button></div>}
     {permissions?.platform==='darwin'&&!permissions.passiveReady&&<div className="mac-permission-notice" role="status"><span>Enable Accessibility for SAA in Mac System Settings to type over fullscreen apps. Return here after enabling it.</span><button className="secondary-button" onClick={()=>void bridge.permissions('accessibility').then(setPermissions).catch(e=>setError(String(e)))}>Enable fullscreen typing</button><button className="text-button" onClick={()=>void bridge.permissions('status').then(setPermissions)}>Check again</button><button className="text-button" onClick={()=>void action('mode')}>Toggle interactive mode</button></div>}
     {view === 'chat' ? <>
       <div className="model-bar"><span className={`status-dot ${settings.model ? 'connected' : ''}`}/><ProviderPicker value={settings.activeProvider} disabled={busy} onChange={id=>void selectProvider(id)}/><span className="toolbar-divider"/><button className="model-button model-name" disabled={busy} onClick={() => setView('settings')}>{settings.model || 'Your model'}<ChevronDown size={15}/></button><div className="message-toggle"><button className={latest ? 'selected' : ''} onClick={() => setLatest(true)}>Latest</button><button className={!latest ? 'selected' : ''} onClick={() => setLatest(false)}>All messages</button></div>{messages.length > 0 && <IconButton label="New chat" className="icon-button" onClick={newChat} disabled={busy}><Plus size={18}/></IconButton>}</div>
-      <div className="chat-scroll" ref={scroll}><ChatContent messages={messages} latest={latest} busy={busy} onPrompt={setDraft} onRetry={retry}/></div>
+      <div className="chat-scroll" ref={scroll} onScroll={e=>{const el=e.currentTarget;followTail.current=el.scrollHeight-el.scrollTop-el.clientHeight<80;}}><ChatContent messages={messages} latest={latest} busy={busy} onPrompt={setDraft} onRetry={retry}/></div>
       <div className="composer-area"><div className="followups">{['Make it simpler', 'Go deeper', 'Give an example'].map(t => <button key={t} disabled={busy} onClick={() => messages.length ? void send(t) : setDraft(t)}>{t}</button>)}</div>
         {(error || notice) && <div className={`inline-notice ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}><span>{error || notice}</span><IconButton className="icon-button" label="Dismiss notice" onClick={() => { setError(''); setNotice(''); }}><X size={14}/></IconButton></div>}
         {images.length > 0 && <div className="attachments">{images.map(img => <div key={img.id}><img src={img.url} alt={img.name}/><IconButton className="remove-image" label={`Remove ${img.name}`} onClick={() => setImages(list => list.filter(i => i.id !== img.id))}><X size={12}/></IconButton></div>)}</div>}
