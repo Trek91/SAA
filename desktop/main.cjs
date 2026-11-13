@@ -11,6 +11,10 @@ const { createSettingsTransaction, backupUnreadable } = require('./storage.cjs')
 const { readClipboardData, writeClipboardData } = require('./clipboard.cjs');
 const { createPassiveInput } = require('./passive-input.cjs');
 const {createHistoryStore}=require('./history.cjs');
+const {createAssistant}=require('./assistant.cjs');
+const {printReport}=require('./report-pdf.cjs');
+const {dialog}=require('electron');
+let assistant;
 
 app.setName('SAA');
 if(!app.commandLine.hasSwitch('user-data-dir')){const dataPath=path.join(app.getPath('appData'),'SAA');mkdirSync(dataPath,{recursive:true});app.setPath('userData',dataPath);app.setPath('sessionData',dataPath);}
@@ -203,6 +207,15 @@ const settingsTransaction = createSettingsTransaction({
 async function mutateSettings(derive) { await settingsTransaction(derive); return publicSettings(); }
 
 function setupIPC() {
+  handle('assistantState',()=>assistant.state());
+  handle('assistantPick',()=>assistant.pick());
+  handle('assistantRun',request=>assistant.run(request));
+  handle('assistantCancel',()=>assistant.cancel());
+  handle('assistantRemove',id=>assistant.remove(id));
+  handle('assistantPreview',id=>assistant.preview(id));
+  handle('assistantExport',id=>assistant.exportOutput(id));
+  handle('assistantOpenTask',id=>assistant.openTask(id));
+  handle('assistantDeleteTask',id=>assistant.deleteTask(id));
   handle('load', () => ({ settings: publicSettings(), conversations:historyStore.get(), mode, clickThrough, compact, shortcutsFailed, storageWarning,permissions:permissions() }));
   handle('permissions',async action=>{
     if(!['status','accessibility','screen'].includes(action))throw new Error('Unknown permission action.');
@@ -345,7 +358,9 @@ else {
   app.whenReady().then(async () => {
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
-    await loadStorage(); setupIPC(); createWindow(); createTray();
+    await loadStorage();
+    assistant=createAssistant({root:path.join(app.getPath('userData'),'assistant'),getSettings:()=>({...settings}),emit:value=>send('saa:assistant',value),printPdf:printReport,chooseFiles:async()=>{setMode('interactive');const result=await dialog.showOpenDialog(win,{title:'Select files for this task',properties:['openFile','multiSelections'],filters:[{name:'Documents and code',extensions:['pdf','docx','zip','txt','md','csv','json','jsonl','js','jsx','ts','tsx','py','html','css','xml','yaml','yml','log','sql','rs','go','java','c','cpp','h','sh','toml','ini']}]});return result.canceled?[]:result.filePaths;},chooseExport:async name=>{setMode('interactive');const result=await dialog.showSaveDialog(win,{title:'Save verified output',defaultPath:name});return result.canceled?null:result.filePath;}});
+    await assistant.init();setupIPC(); createWindow(); createTray();
     if(process.platform==='darwin')Menu.setApplicationMenu(Menu.buildFromTemplate([{label:'SAA',submenu:[{role:'about'},{type:'separator'},{role:'quit'}]},{role:'editMenu'},{role:'windowMenu'}]));
     const shortcuts = [
       ['CommandOrControl+Shift+Space', toggleVisible], ['CommandOrControl+Alt+I', () => setMode(mode === 'passive' ? 'interactive' : 'passive')],
@@ -360,7 +375,7 @@ app.on('before-quit', event => {
   shutdownPending=true;quitting=true;passiveInput?.state(false);
   for(const controller of active.values())controller.abort();
   void(async()=>{
-    try{await Promise.allSettled([...activeTasks]);await historyStore?.flush();await Promise.all([...queues.values()]);passiveInput?.close();quitAfterFlush=true;app.quit();}
+    try{await assistant?.close();await Promise.allSettled([...activeTasks]);await historyStore?.flush();await Promise.all([...queues.values()]);passiveInput?.close();quitAfterFlush=true;app.quit();}
     catch(error){shutdownPending=false;quitting=false;if(win&&!win.isDestroyed()){showPassive();send('saa:action',{type:'error',text:`SAA stayed open because your data could not be saved: ${error.message}`});}}
   })();
 });

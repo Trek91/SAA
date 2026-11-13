@@ -3,6 +3,12 @@ export const isDesktop = !!window.saa;
 let previewSettings=defaults;
 // The browser preview is deliberately local-only. Credentials and HTTP belong to the desktop host.
 export const bridge: DesktopBridge = window.saa ?? {
+  async assistantState(){return{status:'idle',stage:'Open the desktop app to work with files',files:[],outputs:[],report:'',error:'',destination:''};},
+  async assistantPick(){throw Error('File tools require the desktop app.');},
+  async assistantRun(){throw Error('File tasks require the desktop app.');},
+  async assistantCancel(){},async assistantRemove(){return this.assistantState();},async assistantExport(){return false;},onAssistant(){return()=>{};},
+  async assistantOpenTask(){return this.assistantState();},async assistantDeleteTask(){return this.assistantState();},
+  async assistantPreview(){throw Error('File previews require the desktop app.');},
   async permissions(){return {platform:'preview',passiveReady:false,accessibility:false,screen:'unknown'};},
   async load() {
     let conversations = [];

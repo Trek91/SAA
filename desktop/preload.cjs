@@ -8,6 +8,16 @@ const subscribe = (channel, callback) => {
 };
 contextBridge.exposeInMainWorld('saa', Object.freeze({
   load: () => ipcRenderer.invoke('saa:load'),
+  assistantState:()=>ipcRenderer.invoke('saa:assistantState'),
+  assistantPick:()=>ipcRenderer.invoke('saa:assistantPick'),
+  assistantRun:request=>ipcRenderer.invoke('saa:assistantRun',request),
+  assistantCancel:()=>ipcRenderer.invoke('saa:assistantCancel'),
+  assistantRemove:id=>ipcRenderer.invoke('saa:assistantRemove',id),
+  assistantPreview:id=>ipcRenderer.invoke('saa:assistantPreview',id),
+  assistantExport:id=>ipcRenderer.invoke('saa:assistantExport',id),
+  assistantOpenTask:id=>ipcRenderer.invoke('saa:assistantOpenTask',id),
+  assistantDeleteTask:id=>ipcRenderer.invoke('saa:assistantDeleteTask',id),
+  onAssistant:callback=>subscribe('saa:assistant',callback),
   permissions: (action) => ipcRenderer.invoke('saa:permissions',action),
   saveSettings: (settings) => ipcRenderer.invoke('saa:saveSettings', settings),
   selectProvider: (id) => ipcRenderer.invoke('saa:selectProvider',id),
